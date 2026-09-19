@@ -1,0 +1,183 @@
+<%
+  /* ------------------------------------------------------------------
+     View-model. Everything the controller may pass, with safe defaults
+     so a missing value never crashes the render.
+
+       title        page title
+       currentUser  { name, role: 'reporter' | 'editor' } or undefined for guests
+       categories   ['Politics', 'Sports', ...]
+       articles     first page of PUBLISHED articles, already filtered/sorted
+       pagination   { page, limit, total, hasMore }
+       filters      { q, category, seen: 'all'|'seen'|'unseen', sort: 'newest'|'popular' }
+     ------------------------------------------------------------------ */
+  const user = locals.currentUser || null;
+  const categories = locals.categories || [];
+  const stories = locals.articles || [];
+  const filters = Object.assign({ q: '', category: '', seen: 'all', sort: 'newest' }, locals.filters);
+  const paging = Object.assign({ page: 1, limit: 20, total: stories.length, hasMore: false }, locals.pagination);
+
+  /* Site settings: one place to change routes, language and time zone. */
+  const locale = 'en-GB';
+  const timeZone = 'Asia/Jerusalem';
+  const articleUrl = '/articles/';
+  const workspaceLinks = {
+    reporter: { href: '/reporter', label: 'My workspace' },
+    editor: { href: '/editor', label: 'Editor area' }
+  };
+  const workspace = user ? workspaceLinks[user.role] : null;
+
+  /* Helpers (same logic lives in public/js/home.js so server and client render alike). */
+  const dateFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone });
+  const fmtDate = (value) => {
+    const d = new Date(value);
+    return isNaN(d) ? null : { iso: d.toISOString(), text: dateFmt.format(d) };
+  };
+  const hueOf = (name) => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+    return h;
+  };
+
+  const now = new Date();
+  const todayText = new Intl.DateTimeFormat(locale, { dateStyle: 'full', timeZone }).format(now);
+  const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone }).format(now); /* YYYY-MM-DD */
+
+  const cardLocals = { tpl: false, eager: false, hueOf, fmtDate, articleUrl };
+  const plural = paging.total === 1 ? 'story' : 'stories';
+%>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= locals.title || 'The Web Daily' %></title>
+    <meta name="description" content="Latest stories from The Web Daily." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap" />
+    <link rel="stylesheet" href="/css/home.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#stories">Skip to stories</a>
+
+    <header class="masthead">
+      <div class="container masthead-bar">
+        <p class="dateline"><time datetime="<%= todayIso %>"><%= todayText %></time></p>
+        <nav class="account" aria-label="Account">
+          <% if (user) { %>
+            <span class="account-name"><%= user.name %></span>
+            <% if (workspace) { %><a href="<%= workspace.href %>"><%= workspace.label %></a><% } %>
+            <button id="logout" class="account-button" type="button">Log out</button>
+          <% } else { %>
+            <a href="/login">Log in</a>
+          <% } %>
+        </nav>
+      </div>
+      <div class="container">
+        <h1 class="wordmark"><a href="/">The Web Daily</a></h1>
+      </div>
+    </header>
+
+    <div class="container layout">
+      <main class="main-col" id="stories" tabindex="-1">
+        <h2 class="sr-only">Stories</h2>
+
+        <form id="feed-controls" class="controls" action="/" method="get" role="search" aria-label="Search and filter stories">
+          <div class="controls-row">
+            <div class="search">
+              <label class="sr-only" for="search-input">Search stories by title</label>
+              <svg class="search-icon" aria-hidden="true" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg>
+              <input id="search-input" name="q" type="search" maxlength="100" autocomplete="off" placeholder="Search stories" value="<%= filters.q %>" />
+            </div>
+
+            <label class="select-field">
+              <span>Sort by</span>
+              <select name="sort">
+                <option value="newest"<%= filters.sort === 'newest' ? ' selected' : '' %>>Newest first</option>
+                <option value="popular"<%= filters.sort === 'popular' ? ' selected' : '' %>>Most popular</option>
+              </select>
+            </label>
+
+            <fieldset class="segmented">
+              <legend class="sr-only">Viewed status</legend>
+              <label><input type="radio" name="seen" value="all"<%= filters.seen === 'all' ? ' checked' : '' %>><span>All</span></label>
+              <label><input type="radio" name="seen" value="unseen"<%= filters.seen === 'unseen' ? ' checked' : '' %>><span>Not viewed</span></label>
+              <label><input type="radio" name="seen" value="seen"<%= filters.seen === 'seen' ? ' checked' : '' %>><span>Viewed</span></label>
+            </fieldset>
+          </div>
+
+          <fieldset class="chips">
+            <legend class="sr-only">Category</legend>
+            <label class="chip"><input type="radio" name="category" value=""<%= filters.category === '' ? ' checked' : '' %>><span>All categories</span></label>
+            <% categories.forEach((c) => { %>
+              <label class="chip chip--cat" style="--h: <%= hueOf(c) %>"><input type="radio" name="category" value="<%= c %>"<%= filters.category === c ? ' checked' : '' %>><span><%= c %></span></label>
+            <% }) %>
+          </fieldset>
+
+          <noscript><button class="btn" type="submit">Apply</button></noscript>
+        </form>
+
+        <p id="feed-status" class="feed-status" role="status" aria-live="polite"><%= stories.length === 0 ? 'No stories found' : `Showing ${stories.length} of ${paging.total} ${plural}` %></p>
+
+        <div id="story-list" class="story-list" aria-busy="false">
+          <% stories.forEach((a, i) => { %><%- include('partials/story-card', Object.assign({}, cardLocals, { a, eager: i < 2 })) %><% }) %>
+        </div>
+
+        <div id="loader" class="loader" hidden><span class="loader-dots" aria-hidden="true"></span><span>Loading stories</span></div>
+
+        <div id="empty-state" class="notice" <%= stories.length === 0 ? '' : 'hidden' %>>
+          <h3>No stories match your search</h3>
+          <p>Try different words, or clear the filters to see everything.</p>
+          <button id="clear-filters" class="btn" type="button">Clear filters</button>
+        </div>
+
+        <div id="feed-error" class="notice notice--error" role="alert" hidden>
+          <h3>Stories could not be loaded</h3>
+          <p id="feed-error-text"></p>
+          <button id="retry" class="btn" type="button">Try again</button>
+        </div>
+
+        <button id="load-more" class="btn btn--quiet load-more" type="button" hidden>Load more stories</button>
+        <p id="end-marker" class="end-marker" <%= (stories.length > 0 && !paging.hasMore) ? '' : 'hidden' %>>You have reached the end of the stories.</p>
+
+        <div id="sentinel" class="sentinel" aria-hidden="true"></div>
+      </main>
+
+      <aside class="sidebar" aria-label="Sidebar">
+        <section id="weather" class="weather" aria-labelledby="weather-title" aria-busy="true">
+          <h2 id="weather-title" class="weather-title">Weather</h2>
+          <div class="weather-body" data-w="body">
+            <p class="weather-city" data-w="city">Loading</p>
+            <p class="weather-temp"><span data-w="temp">--</span><span class="weather-unit">&deg;C</span></p>
+            <p class="weather-desc" data-w="description"></p>
+            <dl class="weather-facts">
+              <div><dt>Feels like</dt><dd><span data-w="feels">--</span>&deg;C</dd></div>
+              <div><dt>Humidity</dt><dd><span data-w="humidity">--</span>%</dd></div>
+              <div><dt>Wind</dt><dd><span data-w="wind">--</span> km/h</dd></div>
+            </dl>
+            <p class="weather-updated">Updated <time data-w="updated">--:--</time></p>
+          </div>
+          <div class="weather-error" data-w="error" hidden>
+            <p>Weather is unavailable right now.</p>
+            <button id="weather-retry" class="btn btn--quiet" type="button">Try again</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- Cloned by home.js for every page loaded after the first. Same partial as the server loop. -->
+    <template id="story-template"><%- include('partials/story-card', Object.assign({}, cardLocals, { a: {}, tpl: true })) %></template>
+
+    <script>window.HOME_CONFIG = <%- JSON.stringify({
+      articlesApi: '/api/articles',
+      weatherApi: '/api/weather',
+      logoutApi: '/api/auth/logout',
+      articleUrl: articleUrl,
+      pageSize: 20,
+      locale: locale,
+      timeZone: timeZone,
+      initial: { page: paging.page, total: paging.total, hasMore: !!paging.hasMore }
+    }).replace(/</g, '\\u003c') %>;</script>
+    <script src="/js/home.js" defer></script>
+  </body>
+</html>

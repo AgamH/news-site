@@ -1,0 +1,32 @@
+<%#
+  One story in the feed.
+
+  Used twice from index.ejs:
+    1. in a loop, to render the first page on the server (real HTML for the first paint)
+    2. once inside <template id="story-template"> with `tpl: true`, so home.js can clone it
+       for every page it loads afterwards. One markup source, so both always look identical.
+
+  Locals: a (article), tpl (bool), eager (bool), hueOf, fmtDate, articleUrl
+%>
+<%
+  const id = String(a._id || a.id || '');
+  const category = a.category || '';
+  const date = a.publishedAt ? fmtDate(a.publishedAt) : null;
+%>
+<article class="story<%= a.seen ? ' is-seen' : '' %>" data-id="<%= id %>" style="--h: <%= hueOf(category) %>">
+  <div class="story-media<%= (a.imageUrl || tpl) ? '' : ' is-missing' %>" data-f="media" data-initial="<%= category.charAt(0).toUpperCase() %>">
+    <% if (a.imageUrl || tpl) { %>
+      <img data-f="image" src="<%= a.imageUrl || '' %>" alt="" width="600" height="400" loading="<%= eager ? 'eager' : 'lazy' %>" decoding="async">
+    <% } %>
+  </div>
+  <div class="story-body">
+    <p class="story-category"><a data-f="category" href="/?category=<%= encodeURIComponent(category) %>"><%= category %></a></p>
+    <h3 class="story-title"><a data-f="title" href="<%= articleUrl %><%= encodeURIComponent(id) %>"><%= a.title || '' %></a></h3>
+    <p class="story-summary" data-f="summary"><%= a.summary || '' %></p>
+    <div class="story-meta">
+      <span class="story-byline">By <span data-f="reporter"><%= (a.reporter && a.reporter.name) || 'Staff' %></span></span>
+      <time data-f="date"<% if (date) { %> datetime="<%= date.iso %>"<% } else { %> hidden<% } %>><%= date ? date.text : '' %></time>
+      <span class="story-flag" data-f="flag"<%= a.seen ? '' : ' hidden' %>>Viewed</span>
+    </div>
+  </div>
+</article>

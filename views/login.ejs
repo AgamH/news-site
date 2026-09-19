@@ -1,0 +1,57 @@
+<%
+  /* View-model: title (optional). Routes live here so they can be changed in one place. */
+  const loginApi = '/api/auth/login';
+  const roleHome = { reporter: '/reporter', editor: '/editor' }; /* same targets as the home page account bar */
+%>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= locals.title || 'Log in' %> | The Web Daily</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" />
+    <link rel="stylesheet" href="/css/auth.css" />
+  </head>
+  <body class="auth-page">
+    <div class="auth-layout">
+      <header class="auth-brand">
+        <a class="wordmark" href="/">The Web Daily</a>
+      </header>
+
+      <main class="auth-main">
+        <section class="auth-panel" aria-labelledby="login-title">
+          <h1 id="login-title">Log in</h1>
+          <p class="auth-lead">For reporters and editors. Readers can browse the news without an account.</p>
+
+          <form id="login-form" method="post" action="<%= loginApi %>">
+            <div class="field">
+              <label for="username">Username</label>
+              <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="50" required />
+            </div>
+
+            <div class="field">
+              <label for="password">Password</label>
+              <div class="password-wrap">
+                <input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required />
+                <button id="toggle-password" class="toggle" type="button" aria-controls="password" aria-label="Show password">Show</button>
+              </div>
+            </div>
+
+            <p id="form-message" class="form-message" role="alert"></p>
+
+            <button id="submit" class="btn" type="submit">Log in</button>
+            <noscript><p class="form-message">JavaScript must be turned on to log in.</p></noscript>
+          </form>
+
+          <a class="back-link" href="/">Back to stories</a>
+        </section>
+      </main>
+    </div>
+
+    <script>window.AUTH_CONFIG = <%- JSON.stringify({ loginApi: loginApi, roleHome: roleHome }).replace(/</g, '\\u003c') %>;</script>
+    <script src="/js/auth.js" defer></script>
+  </body>
+</html>

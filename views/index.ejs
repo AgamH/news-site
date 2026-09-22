@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <nav class="account-bar" aria-label="Account">
+        <% if (currentUser) { %>
+          <span>Signed in as <strong><%= currentUser.name %></strong> · <%= currentUser.role %></span>
+          <% if (currentUser.role === 'reporter') { %><a class="nav-link" href="/reporter">My articles</a><% } %>
+          <% if (currentUser.role === 'editor') { %><a class="nav-link" href="/editor">Editor desk</a><% } %>
+          <% if (currentUser.role === 'editor') { %><a class="nav-link" href="/admin/logs">Application logs</a><% } %>
+          <button id="logout" class="light-button" type="button">Log out</button>
+        <% } else { %>
+          <a class="nav-link" href="/login">Reporter / editor login</a>
+        <% } %>
+      </nav>
+      <p class="eyebrow">THE DAILY WEB</p>
+      <h1><%= title %></h1>
+      <p>The news that matters, fact-checked and freshly published.</p>
+    </header>
+    <main>
+      <section>
+        <section class="panel filter-panel" aria-labelledby="filter-title">
+          <div class="section-heading">
+            <h2 id="filter-title">Search & filter</h2>
+            <button id="clear-filters" class="secondary" type="button">Clear</button>
+          </div>
+          <form id="filter-form">
+            <label class="wide">Search<input name="q" type="search" placeholder="Title, summary, reporter…" /></label>
+            <label>Category
+              <select name="category">
+                <option value="">All categories</option>
+                <option>News</option>
+                <option>Politics</option>
+                <option>Economy</option>
+                <option>Technology</option>
+                <option>Sports</option>
+                <option>Culture</option>
+                <option>Opinion</option>
+              </select>
+            </label>
+            <% if (currentUser) { %>
+              <label>Viewed
+                <select name="viewed">
+                  <option value="">All articles</option>
+                  <option value="viewed">Already viewed</option>
+                  <option value="unviewed">Not viewed yet</option>
+                </select>
+              </label>
+            <% } %>
+            <label>Sort
+              <select name="sort">
+                <option value="publishedAt">Publish date</option>
+                <option value="views">Popularity</option>
+              </select>
+            </label>
+            <label>Order
+              <select name="order">
+                <option value="desc">Newest / most viewed first</option>
+                <option value="asc">Oldest / least viewed first</option>
+              </select>
+            </label>
+            <button class="wide" type="submit">Apply filters</button>
+          </form>
+        </section>
+        <div class="section-heading">
+          <h2>Latest articles</h2>
+          <span id="count"><%= articles.length %> article<%= articles.length === 1 ? '' : 's' %></span>
+        </div>
+        <div id="articles" class="recipes" data-initial-render="ejs" data-page="1">
+          <% articles.forEach((article) => { %>
+            <article class="card" data-article-id="<%= article.id %>">
+              <% if (article.imageUrl) { %>
+                <img class="card-image" src="<%= article.imageUrl %>" alt="" loading="lazy" />
+              <% } %>
+              <h3><a class="card-link" href="/articles/<%= article.id %>"><%= article.title %></a></h3>
+              <dl class="meta">
+                <div><dt>Category</dt><dd><%= article.category %></dd></div>
+                <div><dt>Reporter</dt><dd><%= article.reporterName %></dd></div>
+                <div><dt>Published</dt><dd><%= article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : '—' %></dd></div>
+              </dl>
+              <p class="note"><%= article.summary %></p>
+              <div class="card-actions">
+                <a href="/articles/<%= article.id %>">Read article</a>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+        <div id="empty-state" class="empty-state" hidden>No articles match these filters.</div>
+        <p id="feed-status" class="helper" role="status"></p>
+        <div id="load-more-sentinel" aria-hidden="true"></div>
+      </section>
+      <section class="dashboard" aria-label="Sidebar">
+        <article class="visual-card">
+          <h2>Weather</h2>
+          <div id="weather-widget" class="weather-widget" aria-live="polite">Loading weather…</div>
+        </article>
+      </section>
+    </main>
+    <script>window.currentUser = <%- JSON.stringify(currentUser || null).replace(/</g, '\\u003c') %>;</script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" defer></script>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

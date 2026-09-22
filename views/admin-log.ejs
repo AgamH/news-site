@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="compact-header">
+      <nav class="account-bar" aria-label="Account">
+        <a class="nav-link" href="/">← News feed</a>
+        <span>Signed in as <strong><%= currentUser.name %></strong> · editor</span>
+        <button id="logout" class="light-button" type="button">Log out</button>
+      </nav>
+      <p class="eyebrow">THE DAILY WEB · ADMINISTRATION</p>
+      <h1><%= title %></h1>
+      <p>Search operational events and errors stored in MongoDB.</p>
+    </header>
+    <main class="admin-main">
+      <section class="panel log-filter-panel">
+        <div class="section-heading">
+          <h2>Filter logs</h2>
+          <button id="clear-log-filters" class="secondary" type="button">Clear</button>
+        </div>
+        <form id="log-filter-form">
+          <label class="wide">Search
+            <input name="q" type="search" placeholder="Message, URL, email or request ID" />
+          </label>
+          <label>Level
+            <select name="level">
+              <option value="">All levels</option>
+              <option value="fatal">Fatal</option>
+              <option value="error" selected>Errors</option>
+              <option value="warn">Warnings</option>
+              <option value="info">Information</option>
+            </select>
+          </label>
+          <label>Source
+            <select id="source-filter" name="source"><option value="">All sources</option></select>
+          </label>
+          <label>Status code<input name="statusCode" type="number" min="100" max="599" placeholder="500" /></label>
+          <label>Request ID<input name="requestId" placeholder="UUID" /></label>
+          <label>From<input name="from" type="datetime-local" /></label>
+          <label>To<input name="to" type="datetime-local" /></label>
+          <button class="wide" type="submit">Apply filters</button>
+        </form>
+      </section>
+
+      <section class="log-results">
+        <div class="section-heading">
+          <h2>MongoDB log entries</h2>
+          <span id="log-count">Loading…</span>
+        </div>
+        <p id="log-message" class="form-message" role="status"></p>
+        <div class="log-table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>Time</th><th>Level</th><th>Source</th><th>Message</th><th>Request</th><th>User</th></tr>
+            </thead>
+            <tbody id="log-rows"></tbody>
+          </table>
+        </div>
+        <div id="no-logs" class="empty-state" hidden>No log entries match the selected filters.</div>
+        <nav class="pagination" aria-label="Log pages">
+          <button id="previous-page" class="secondary" type="button">Previous</button>
+          <span id="page-label">Page 1</span>
+          <button id="next-page" class="secondary" type="button">Next</button>
+        </nav>
+      </section>
+    </main>
+
+    <dialog id="log-dialog">
+      <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
+      <h2>Log details</h2>
+      <pre id="log-details"></pre>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" defer></script>
+    <script src="/admin-logs.js" defer></script>
+  </body>
+</html>

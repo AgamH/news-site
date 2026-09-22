@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %> — The Daily Web</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="auth-page">
+    <main class="auth-shell">
+      <section class="auth-card">
+        <p class="eyebrow">THE DAILY WEB</p>
+        <h1>Newsroom sign-in</h1>
+        <p>Log in to write, edit, or approve articles for the newsroom.</p>
+        <form id="auth-form" data-mode="login">
+          <label class="wide">Email<input name="email" type="email" autocomplete="email" required /></label>
+          <label class="wide">Password<input name="password" type="password" autocomplete="current-password" required /></label>
+          <button class="wide" type="submit">Log in</button>
+        </form>
+        <p id="auth-message" class="form-message" role="status"></p>
+        <div class="auth-links">
+          <a href="/register/reporter">Create reporter account</a>
+          <a href="/register/editor">Create editor account</a>
+          <a href="/">← Back to the news feed</a>
+        </div>
+      </section>
+    </main>
+    <script src="/auth.js" defer></script>
+  </body>
+</html>

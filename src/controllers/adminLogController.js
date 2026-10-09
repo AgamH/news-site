@@ -17,23 +17,47 @@ function parseDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function buildFilter({ level, source, q, from, to, statusCode } = {}) {
+  const filter = {};
+
+  if (LEVELS.includes(level)) filter.level = level;
+
+  if (source) {
+    const sourceValue = String(source).trim();
+    if (sourceValue) filter.source = new RegExp(sourceValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  }
+
+  const statusValue = Number.parseInt(statusCode, 10);
+  if (Number.isFinite(statusValue)) filter.statusCode = statusValue;
+
+  const text = String(q || '').trim();
+  if (text) {
+    const safeText = text.slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.$or = [
+      { message: new RegExp(safeText, 'i') },
+      { source: new RegExp(safeText, 'i') },
+      { path: new RegExp(safeText, 'i') },
+      { userEmail: new RegExp(safeText, 'i') },
+      { requestId: new RegExp(safeText, 'i') },
+    ];
+  }
+
+  const timestamp = {};
+  const fromDate = parseDate(from);
+  const toDate = parseDate(to);
+  if (fromDate) timestamp.$gte = fromDate;
+  if (toDate) timestamp.$lte = toDate;
+  if (Object.keys(timestamp).length) filter.timestamp = timestamp;
+
+  return filter;
+}
+
 async function listLogs(req, res) {
-  const { level, source, q, from, to } = req.query;
+  const { level, source, q, from, to, statusCode } = req.query;
   const page = clampInt(req.query.page, { min: 1, max: Number.MAX_SAFE_INTEGER, fallback: 1 });
   const limit = clampInt(req.query.limit, { min: 1, max: MAX_PAGE_SIZE, fallback: DEFAULT_PAGE_SIZE });
 
-  const filter = {};
-  if (LEVELS.includes(level)) filter.level = level;
-  if (source) filter.source = String(source).trim();
-  if (q) filter.message = { $regex: String(q).trim().slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
-
-  const fromDate = parseDate(from);
-  const toDate = parseDate(to);
-  if (fromDate || toDate) {
-    filter.timestamp = {};
-    if (fromDate) filter.timestamp.$gte = fromDate;
-    if (toDate) filter.timestamp.$lte = toDate;
-  }
+  const filter = buildFilter({ level, source, q, from, to, statusCode });
 
   const [data, total] = await Promise.all([
     SystemLog.find(filter).sort({ timestamp: -1 }).skip((page - 1) * limit).limit(limit).lean(),
@@ -49,4 +73,4 @@ async function getLog(req, res) {
   res.json(log);
 }
 
-module.exports = { listLogs, getLog };
+module.exports = { listLogs, getLog, buildFilter };

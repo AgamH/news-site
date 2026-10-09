@@ -33,4 +33,36 @@ function parseArticleInput(body = {}) {
   return article;
 }
 
-module.exports = { parseArticleInput };
+/**
+ * Lenient version used by autosave: the reporter is still typing, so fields may be empty.
+ * Length and category limits still apply. A half-typed image URL is left out of the
+ * result, so the last valid one stays saved.
+ */
+function parseArticleDraft(body = {}) {
+  const draft = {
+    title: String(body.title || '').trim(),
+    summary: String(body.summary || '').trim(),
+    content: String(body.content || '').trim(),
+    category: String(body.category || '').trim(),
+  };
+
+  if (draft.title.length > 200) throw httpError(400, 'Titles are limited to 200 characters.');
+  if (draft.summary.length > 400) throw httpError(400, 'Summaries are limited to 400 characters.');
+  if (draft.content.length > 100000) throw httpError(400, 'Article content is too long.');
+  if (!CATEGORIES.includes(draft.category)) throw httpError(400, 'Choose a valid article category.');
+
+  const imageUrl = String(body.imageUrl || '').trim();
+  if (!imageUrl) {
+    draft.imageUrl = '';
+  } else {
+    try {
+      if (['http:', 'https:'].includes(new URL(imageUrl).protocol)) draft.imageUrl = imageUrl;
+    } catch {
+      // not a complete URL yet
+    }
+  }
+
+  return draft;
+}
+
+module.exports = { parseArticleInput, parseArticleDraft };

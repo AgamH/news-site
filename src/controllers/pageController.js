@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { Article } = require('../models/articleModel');
 const { Comment } = require('../models/commentModel');
 const { recordView } = require('../models/articleViewModel');
+const { getOrCreateDeviceId } = require('../middleware/deviceMiddleware');
 const { showLogDashboard } = require('./adminLogController');
 
 const PAGE_SIZE = 20;
@@ -64,7 +65,8 @@ async function showArticlePage(req, res) {
       { _id: article._id },
       { $inc: { views: 1 } }
     ).exec(),
-    recordView(article._id),
+    // Tied to the device so the feed's viewed / not viewed filter can find it.
+    recordView(article._id, getOrCreateDeviceId(req, res)),
   ]);
 
   const comments = await Comment.find({

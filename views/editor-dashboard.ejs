@@ -43,7 +43,7 @@
         
         <% articles.forEach((article) => { %>
           <article class="card">
-            <h3><a class="card-link" href="/editor/<%= article._id || article.id %>"><%= article.title %></a></h3>
+            <h3><a class="card-link" href="/editor/<%= article._id || article.id %>"><%= article.title || 'Untitled draft' %></a></h3>
             <dl class="meta">
               <div><dt>Status</dt><dd><span class="level level-<%= article.status %>"><%= article.status %></span></dd></div>
               <div><dt>Reporter</dt><dd><%= article.reporterName %></dd></div>

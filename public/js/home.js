@@ -15,11 +15,13 @@
   const errorState = $('#feed-error');
   const errorText = $('#feed-error-text');
   const endMarker = $('#end-marker');
+  const sentinel = $('#sentinel');
   const loadMoreBtn = $('#load-more');
 
   const DEFAULTS = { q: '', category: '', seen: 'all', sort: 'newest' };
   const SEARCH_DELAY_MS = 350;
   const SCROLL_LOOKAHEAD = '0px 0px 800px 0px'; // start loading ~800px before the bottom
+  let observer = null;
 
   const dateFmt = new Intl.DateTimeFormat(config.locale, { dateStyle: 'medium', timeZone: config.timeZone });
   const timeFmt = new Intl.DateTimeFormat(config.locale, { timeStyle: 'short', timeZone: config.timeZone });
@@ -144,7 +146,7 @@
     errorState.hidden = !state.failed;
     emptyState.hidden = !(count === 0 && !busy && !state.failed);
     endMarker.hidden = !(count > 0 && !state.hasMore && !busy && !state.failed);
-    loadMoreBtn.hidden = !state.hasMore || busy || state.failed;
+    loadMoreBtn.hidden = Boolean(observer) || !state.hasMore || busy || state.failed;
 
     if (busy && state.refreshing) {
       statusEl.textContent = 'Loading stories';
@@ -198,7 +200,7 @@
         credentials: 'same-origin',
         headers: { Accept: 'application/json' },
       });
-      const body = await response.json().catch(() => null);
+      const body = window.sanitize.data(await response.json().catch(() => null));
       if (!response.ok) {
         throw new Error((body && body.message) || `The server returned an error (${response.status}). Try again.`);
       }
@@ -242,8 +244,25 @@
         state.loading = false;
         state.refreshing = false;
         updateUi();
+        if (state.hasMore && !state.failed) watchAgain();
       }
     }
+  }
+
+  if ('IntersectionObserver' in window && sentinel) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) load();
+      },
+      { rootMargin: SCROLL_LOOKAHEAD }
+    );
+    observer.observe(sentinel);
+  }
+
+  function watchAgain() {
+    if (!observer || !sentinel) return;
+    observer.unobserve(sentinel);
+    observer.observe(sentinel);
   }
 
   /* ------------------------------------------------------------------ */
@@ -371,7 +390,7 @@
     try {
       const response = await fetch(config.weatherApi, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
       if (!response.ok) throw new Error(`weather ${response.status}`);
-      const data = await response.json();
+      const data = window.sanitize.data(await response.json());
 
       const fetchedAt = Date.parse(data.updatedAt);
       if (Number.isFinite(fetchedAt) && Date.now() - fetchedAt > WEATHER_MAX_AGE_MS) throw new Error('weather data too old');
@@ -396,5 +415,12 @@
     });
   }
 
+  // A refreshed or shared link carries its filters in the address bar: apply them to the form and reload.
+  const urlFilters = new URLSearchParams(location.search);
+  for (const key of Object.keys(DEFAULTS)) {
+    if (urlFilters.has(key)) form.elements[key].value = urlFilters.get(key);
+  }
+
   updateUi();
+  if (!sameFilters(readFilters(), state.filters)) load({ reset: true });
 })();

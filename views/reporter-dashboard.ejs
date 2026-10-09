@@ -48,7 +48,7 @@
               <li class="reporter-row">
                 <div class="reporter-row-main">
                   <p class="reporter-category"><%= article.category %></p>
-                  <h3><a href="/reporter/<%= article.id %>/edit"><%= article.title %></a></h3>
+                  <h3><a href="/reporter/<%= article.id %>/edit"><%= article.title || 'Untitled draft' %></a></h3>
                   <% if (article.status === 'returned' && article.editorNote) { %>
                     <p class="reporter-note"><strong>Editor's note:</strong> <%= article.editorNote %></p>
                   <% } %>

@@ -31,9 +31,12 @@ async function seedViewsIfEmpty(articles) {
   for (const article of articles) {
     if (!article.published) continue;
     const eventsCount = Math.max(5, Math.min(article.views, 300));
-    const spanMs = Math.max(now - article.published.publishedAt.getTime(), 24 * 60 * 60 * 1000);
+    // Spread from the first publication (not the latest update) so the analytics chart
+    // has views on both sides of every update marker.
+    const firstPublishedAt = (article.publishHistory?.[0]?.publishedAt || article.published.publishedAt).getTime();
+    const spanMs = Math.max(now - firstPublishedAt, 24 * 60 * 60 * 1000);
     for (let i = 0; i < eventsCount; i += 1) {
-      rows.push({ article: article._id, viewedAt: new Date(article.published.publishedAt.getTime() + Math.random() * spanMs) });
+      rows.push({ article: article._id, viewedAt: new Date(firstPublishedAt + Math.random() * spanMs) });
     }
   }
   if (rows.length) await ArticleView.insertMany(rows, { ordered: false });

@@ -7,6 +7,8 @@ const authRoutes = require('./routes/authRoutes');
 const articleRoutes = require('./routes/articleRoutes');
 const reporterRoutes = require('./routes/reporterRoutes');
 const editorRoutes = require('./routes/editorRoutes');
+const reporterApiRoutes = require('./routes/reporterApiRoutes');
+const editorApiRoutes = require('./routes/editorApiRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
@@ -27,6 +29,11 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(requestLogger);
 
+// DOMPurify is installed with npm and served from here, so the client never depends on a CDN.
+app.get('/vendor/purify.min.js', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'node_modules', 'dompurify', 'dist', 'purify.min.js'));
+});
+
 // Page routes (server-rendered EJS) at the root.
 app.use('/', pageRoutes);
 
@@ -35,6 +42,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reporter', reporterApiRoutes);
+app.use('/api/editor', editorApiRoutes);
 
 // Logged-in work areas, matching the redirect targets public/js/auth.js already uses.
 app.use('/reporter', reporterRoutes);

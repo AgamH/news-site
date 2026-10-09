@@ -32,7 +32,7 @@
             <select name="level">
               <option value="">All levels</option>
               <option value="fatal">Fatal</option>
-              <option value="error" selected>Errors</option>
+              <option value="error">Errors</option>
               <option value="warn">Warnings</option>
               <option value="info">Information</option>
             </select>
@@ -77,7 +77,8 @@
       <pre id="log-details"></pre>
     </dialog>
 
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" defer></script>
+    <script src="/vendor/purify.min.js" defer></script>
+    <script src="/js/sanitize.js" defer></script>
     <script src="/js/admin-logs.js" defer></script>
   </body>
 </html>

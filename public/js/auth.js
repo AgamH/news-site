@@ -1,7 +1,7 @@
 /**
  * The Web Daily - log in. Vanilla JS, no dependencies.
  *
- *   POST /api/auth/login   body: { username, password }
+ *   POST /api/auth/login   body: { email, password }
  *     200 -> { user: { name, role: 'reporter' | 'editor' }, redirectTo?: '/some/path' }
  *     400 / 401 / 429 / 5xx -> { message: 'text that is safe to show the user' }
  *
@@ -15,7 +15,7 @@
   if (!config) return;
 
   const form = document.getElementById('login-form');
-  const usernameInput = document.getElementById('username');
+  const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
   const toggleButton = document.getElementById('toggle-password');
   const submitButton = document.getElementById('submit');
@@ -39,8 +39,8 @@
 
   function messageFor(status, serverMessage) {
     if (serverMessage) return serverMessage;
-    if (status === 400) return 'Enter your username and password.';
-    if (status === 401) return 'Incorrect username or password.';
+    if (status === 400) return 'Enter your email and password.';
+    if (status === 401) return 'Incorrect email or password.';
     if (status === 429) return 'Too many attempts. Wait a minute and try again.';
     return 'The server had a problem. Try again in a moment.';
   }
@@ -56,12 +56,12 @@
     event.preventDefault();
     if (submitting) return;
 
-    const username = usernameInput.value.trim();
+    const email = emailInput.value.trim();
     const password = passwordInput.value; // never trimmed: spaces can be part of a password
 
-    if (!username) {
-      showMessage('Enter your username.');
-      usernameInput.focus();
+    if (!email) {
+      showMessage('Enter your email.');
+      emailInput.focus();
       return;
     }
     if (!password) {
@@ -78,7 +78,7 @@
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
       const body = await response.json().catch(() => null);
 

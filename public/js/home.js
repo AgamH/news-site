@@ -1,18 +1,3 @@
-/**
- * The Web Daily - home page (public feed). Vanilla JS, no dependencies.
- *
- * Endpoints (paths are set in views/index.ejs via window.HOME_CONFIG):
- *
- *   GET /api/articles?q=&category=&seen=all|seen|unseen&sort=newest|popular&page=1&limit=20
- *     -> { data: [{ _id, title, summary, imageUrl, category,
- *                   reporter: { name }, publishedAt, seen }],
- *          page, limit, total, hasMore }
- *     The server returns PUBLISHED articles only.
- *
- *   GET /api/weather
- *     -> { city, tempC, feelsLikeC, description, humidity, windKph, updatedAt }
- *     updatedAt = when the SERVER last fetched the data from the weather provider.
- */
 (() => {
   'use strict';
 

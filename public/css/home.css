@@ -1,7 +1,3 @@
-/* The Web Daily - home page
-   Logical properties (inline/block, start/end) are used throughout,
-   so switching the site to Hebrew later only needs dir="rtl" on <html>. */
-
 :root {
   --ink: #14283f;
   --ink-soft: #4a5b6e;

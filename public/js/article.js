@@ -1,10 +1,3 @@
-/**
- * The Web Daily - article page. Vanilla JS, no dependencies.
- *
- *   POST /api/articles/:id/comments   body: { authorName, body }
- *     201 -> { comment: { id, authorName, body, createdAt } }
- *     400 / 404 / 429 / 5xx -> { message: 'text that is safe to show the user' }
- */
 (() => {
   'use strict';
 

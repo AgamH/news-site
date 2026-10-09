@@ -1,0 +1,118 @@
+<%
+  const user = locals.currentUser || null;
+  const article = locals.article;
+  const comments = locals.comments || [];
+  const locale = 'en-GB';
+  const timeZone = 'Asia/Jerusalem';
+  const workspaceLinks = { reporter: { href: '/reporter', label: 'My workspace' }, editor: { href: '/editor', label: 'Editor area' } };
+  const workspace = user ? workspaceLinks[user.role] : null;
+
+  const dateFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone });
+  const dateTimeFmt = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone });
+  const fmtDate = (value) => {
+    const d = new Date(value);
+    return isNaN(d) ? null : { iso: d.toISOString(), text: dateFmt.format(d) };
+  };
+  const published = fmtDate(article.publishedAt);
+
+  // Same hash used on the home page, so a category keeps the same colour across both pages.
+  const hueOf = (name) => {
+    let h = 0;
+    for (let i = 0; i < String(name).length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+    return h;
+  };
+
+  // Plain-text article body, split into paragraphs on blank lines. Escaped on output below,
+  // so reporter-authored content can never inject markup into the page.
+  const paragraphs = String(article.content || '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+%>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= article.title %> | The Web Daily</title>
+    <meta name="description" content="<%= article.summary %>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Source+Serif+4:opsz,wght@8..60,400..700&display=swap" />
+    <link rel="stylesheet" href="/css/home.css" />
+    <link rel="stylesheet" href="/css/article.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#article-content">Skip to article</a>
+
+    <header class="masthead">
+      <div class="container masthead-bar">
+        <p class="dateline"><a href="/">&larr; All stories</a></p>
+        <nav class="account" aria-label="Account">
+          <% if (user) { %>
+            <span class="account-name"><%= user.name %></span>
+            <% if (workspace) { %><a href="<%= workspace.href %>"><%= workspace.label %></a><% } %>
+            <button id="logout" class="account-button" type="button">Log out</button>
+          <% } else { %>
+            <a href="/login">Log in</a>
+          <% } %>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container article-page">
+      <article>
+        <p class="story-category" style="--h: <%= hueOf(article.category) %>">
+          <a href="/?category=<%= encodeURIComponent(article.category) %>"><%= article.category %></a>
+        </p>
+        <h1 class="article-title" id="article-content"><%= article.title %></h1>
+        <p class="article-summary"><%= article.summary %></p>
+        <div class="article-meta">
+          <span>By <strong><%= article.reporterName %></strong></span>
+          <% if (published) { %><time datetime="<%= published.iso %>"><%= published.text %></time><% } %>
+          <span><%= article.views.toLocaleString(locale) %> views</span>
+        </div>
+
+        <% if (article.imageUrl) { %>
+          <img class="article-hero" src="<%= article.imageUrl %>" alt="" />
+        <% } %>
+
+        <div class="article-body">
+          <% paragraphs.forEach((paragraph) => { %><p><%= paragraph %></p><% }) %>
+        </div>
+      </article>
+
+      <section class="comments" aria-labelledby="comments-title">
+        <h2 id="comments-title">Comments <span id="comment-count">(<%= comments.length %>)</span></h2>
+
+        <form id="comment-form" class="comment-form">
+          <div class="field">
+            <label for="comment-name">Name (optional)</label>
+            <input id="comment-name" name="authorName" type="text" maxlength="60" autocomplete="name" placeholder="Guest" />
+          </div>
+          <div class="field">
+            <label for="comment-body">Comment</label>
+            <textarea id="comment-body" name="body" maxlength="1000" rows="3" required></textarea>
+          </div>
+          <p id="comment-message" class="form-message" role="alert"></p>
+          <button id="comment-submit" class="btn" type="submit">Post comment</button>
+        </form>
+
+        <ul id="comment-list" class="comment-list">
+          <% comments.forEach((comment) => { %>
+            <li class="comment" data-id="<%= comment.id %>">
+              <p class="comment-meta"><strong><%= comment.authorName %></strong> <time datetime="<%= new Date(comment.createdAt).toISOString() %>"><%= dateTimeFmt.format(new Date(comment.createdAt)) %></time></p>
+              <p class="comment-body"><%= comment.body %></p>
+            </li>
+          <% }) %>
+        </ul>
+        <p id="comment-empty" class="comment-empty" <%= comments.length ? 'hidden' : '' %>>No comments yet — be the first to add one.</p>
+      </section>
+    </main>
+
+    <script>window.ARTICLE_CONFIG = <%- JSON.stringify({
+      commentsApi: `/api/articles/${article.id}/comments`,
+      logoutApi: '/api/auth/logout',
+      locale: locale,
+      timeZone: timeZone,
+    }).replace(/</g, '\\u003c') %>;</script>
+    <script src="/js/article.js" defer></script>
+  </body>
+</html>

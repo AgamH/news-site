@@ -151,34 +151,96 @@ async function deleteArticle(req, res) {
   return res.redirect('/editor?status=pending&notice=deleted');
 }
 
-async function showAnalytics(req, res) {
-  const article = await findArticle(req.params.id);
-  const start = new Date();
-  start.setUTCHours(0, 0, 0, 0);
-  start.setUTCDate(start.getUTCDate() - 29);
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+const ANALYTICS_RANGES = {
+  '24h': { label: 'Last 24 hours', bucketMs: HOUR_MS, buckets: 24, format: '%Y-%m-%dT%H:00:00.000Z' },
+  '7d': { label: 'Last 7 days', bucketMs: HOUR_MS, buckets: 7 * 24, format: '%Y-%m-%dT%H:00:00.000Z' },
+  '30d': { label: 'Last 30 days', bucketMs: DAY_MS, buckets: 30, format: '%Y-%m-%dT00:00:00.000Z' },
+};
+const DEFAULT_ANALYTICS_RANGE = '30d';
+const IMPACT_WINDOW_MS = DAY_MS;
+const MAX_IMPACT_ROWS = 12;
+
+/**
+ * Views are stored as one small ArticleView document per view, so any resolution can be
+ * aggregated later. Buckets are aligned to UTC hours/days; the browser shows local time.
+ */
+async function buildAnalytics(article, rangeKey) {
+  const range = ANALYTICS_RANGES[rangeKey];
+  const now = Date.now();
+  const start = Math.floor(now / range.bucketMs) * range.bucketMs - (range.buckets - 1) * range.bucketMs;
+
   const grouped = await ArticleView.aggregate([
-    { $match: { article: article._id, viewedAt: { $gte: start } } },
-    { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$viewedAt', timezone: 'UTC' } }, views: { $sum: 1 } } },
-    { $sort: { _id: 1 } },
+    { $match: { article: article._id, viewedAt: { $gte: new Date(start) } } },
+    { $group: { _id: { $dateToString: { format: range.format, date: '$viewedAt', timezone: 'UTC' } }, views: { $sum: 1 } } },
   ]);
-  const counts = new Map(grouped.map((entry) => [entry._id, entry.views]));
-  const dailyViews = Array.from({ length: 30 }, (_, index) => {
-    const date = new Date(start);
-    date.setUTCDate(start.getUTCDate() + index);
-    const key = date.toISOString().slice(0, 10);
-    return { date: key, label: `${date.getUTCMonth() + 1}/${date.getUTCDate()}`, views: counts.get(key) || 0 };
+  const counts = new Map(grouped.map((entry) => [Date.parse(entry._id), entry.views]));
+  const buckets = Array.from({ length: range.buckets }, (_, index) => {
+    const t = start + index * range.bucketMs;
+    return { t, views: counts.get(t) || 0 };
   });
 
+  // Every approval is a publication point. The first is the original publication;
+  // the ones after it are updates, each compared over an equal window before and after.
+  const history = (article.publishHistory || [])
+    .map((entry) => entry.publishedAt.getTime())
+    .sort((a, b) => a - b);
+  const publications = await Promise.all(history.map(async (t, index) => {
+    const point = { t, isUpdate: index > 0, number: index, inRange: t >= start && t <= now };
+    if (!point.isUpdate || index < history.length - MAX_IMPACT_ROWS) return point;
+
+    const windowMs = Math.min(IMPACT_WINDOW_MS, now - t);
+    const [before, after] = await Promise.all([
+      ArticleView.countDocuments({ article: article._id, viewedAt: { $gte: new Date(t - windowMs), $lt: new Date(t) } }),
+      ArticleView.countDocuments({ article: article._id, viewedAt: { $gte: new Date(t), $lt: new Date(t + windowMs) } }),
+    ]);
+    return { ...point, windowMs, before, after };
+  }));
+
+  return {
+    range: rangeKey,
+    rangeLabel: range.label,
+    bucketMs: range.bucketMs,
+    start,
+    end: now,
+    buckets,
+    periodViews: buckets.reduce((sum, bucket) => sum + bucket.views, 0),
+    totalViews: article.views || 0,
+    publications,
+  };
+}
+
+function parseAnalyticsRange(value) {
+  return Object.hasOwn(ANALYTICS_RANGES, String(value)) ? String(value) : DEFAULT_ANALYTICS_RANGE;
+}
+
+async function showAnalytics(req, res) {
+  const article = await findArticle(req.params.id);
   return res.render('analytics', {
     title: 'Analytics Impact',
     currentUser: req.user,
     articleId: article._id.toString(),
     articleTitle: article.published?.title || article.title,
     totalViews: article.views || 0,
-    periodViews: dailyViews.reduce((sum, item) => sum + item.views, 0),
-    dailyViews,
-    peakViews: Math.max(1, ...dailyViews.map((item) => item.views)),
+    ranges: Object.entries(ANALYTICS_RANGES).map(([key, range]) => ({ key, label: range.label })),
+    range: parseAnalyticsRange(req.query.range),
   });
 }
 
-module.exports = { showDashboard, showReview, reviewArticle, showEditForm, updateArticle, deleteArticle, showAnalytics };
+/** GET /api/editor/articles/:id/analytics?range=24h|7d|30d */
+async function getAnalytics(req, res) {
+  const article = await findArticle(req.params.id);
+  return res.json(await buildAnalytics(article, parseAnalyticsRange(req.query.range)));
+}
+
+module.exports = {
+  showDashboard,
+  showReview,
+  reviewArticle,
+  showEditForm,
+  updateArticle,
+  deleteArticle,
+  showAnalytics,
+  getAnalytics,
+};

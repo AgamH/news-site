@@ -35,7 +35,7 @@ async function seedDemoData() {
   // Re-queried rather than trusting seedArticlesIfEmpty's return value, which is undefined
   // once articles already exist — this keeps view/comment seeding correct even if the
   // database was left in a partial state (articles present, views or comments missing).
-  const publishedArticles = await Article.find({ published: { $ne: null } }).select('published views').lean();
+  const publishedArticles = await Article.find({ published: { $ne: null } }).select('published publishHistory views').lean();
   await seedViewsIfEmpty(publishedArticles);
   await seedCommentsIfEmpty(publishedArticles);
 }

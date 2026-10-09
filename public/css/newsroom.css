@@ -181,7 +181,7 @@ main.form-main {
 
 .analytics-summary {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 1rem;
 }
@@ -207,6 +207,7 @@ main.form-main {
 
 .analytics-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: end;
   justify-content: space-between;
   gap: 1rem;
@@ -221,47 +222,130 @@ main.form-main {
   font: 0.75rem Arial, sans-serif;
 }
 
+.analytics-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.analytics-range {
+  padding: 0.45rem 0.9rem;
+  color: #171717;
+  background: #fff;
+  border: 1px solid var(--border);
+  font: 600 0.85rem Arial, sans-serif;
+  cursor: pointer;
+}
+
+.analytics-range[aria-pressed="true"] {
+  color: #fff;
+  background: #171717;
+  border-color: #171717;
+}
+
+.analytics-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+  color: #595959;
+  font: 0.8rem Arial, sans-serif;
+}
+
+.analytics-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.legend-line {
+  width: 1.25rem;
+  border-top: 2px solid var(--bugle-red);
+}
+
+.legend-marker {
+  height: 1rem;
+  border-left: 2px dashed #171717;
+}
+
 .analytics-chart {
-  display: grid;
-  grid-template-columns: repeat(30, minmax(0, 1fr));
-  align-items: end;
-  gap: 0.25rem;
-  min-height: 230px;
-  padding: 1rem 0 0;
-  border-bottom: 1px solid var(--border);
+  position: relative;
 }
 
-.analytics-day {
-  display: grid;
-  grid-template-rows: 1.25rem minmax(0, 1fr) 1.5rem;
-  align-items: end;
-  justify-items: center;
-  min-width: 0;
-  height: 200px;
-}
-
-.analytics-value {
-  overflow: hidden;
-  color: #595959;
-  font: 0.62rem Arial, sans-serif;
-}
-
-.analytics-bar {
-  align-self: end;
-  width: min(100%, 1.1rem);
-  height: var(--bar-height);
-  min-height: 3px;
-  background: #c91d25;
-  border-radius: 2px 2px 0 0;
-}
-
-.analytics-date {
+.analytics-chart canvas {
+  display: block;
   width: 100%;
-  overflow: hidden;
-  color: #595959;
-  font: 0.58rem Arial, sans-serif;
-  text-align: center;
+  touch-action: pan-y;
+}
+
+.analytics-chart canvas:focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 2px;
+}
+
+.analytics-tooltip {
+  position: absolute;
+  z-index: 1;
+  padding: 0.5rem 0.7rem;
+  color: #fff;
+  background: #171717;
+  border-radius: 4px;
+  font: 0.78rem/1.4 Arial, sans-serif;
   white-space: nowrap;
+  pointer-events: none;
+}
+
+.analytics-tooltip p {
+  margin: 0;
+}
+
+.analytics-tooltip-value {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.analytics-tooltip-update {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px dashed #ffffff80;
+}
+
+.analytics-note {
+  color: #595959;
+  font: 0.85rem/1.5 Arial, sans-serif;
+}
+
+.analytics-table-wrap {
+  overflow-x: auto;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 0.88rem Arial, sans-serif;
+}
+
+.analytics-table th,
+.analytics-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.analytics-table thead th {
+  color: #595959;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.analytics-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .autosave-status {
@@ -307,18 +391,5 @@ main.form-main {
 
   .article-form .wide {
     grid-column: auto;
-  }
-
-  .analytics-chart {
-    gap: 0.1rem;
-    overflow-x: auto;
-  }
-
-  .analytics-day {
-    min-width: 0.65rem;
-  }
-
-  .analytics-date {
-    font-size: 0.5rem;
   }
 }

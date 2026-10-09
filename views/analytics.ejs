@@ -15,46 +15,73 @@
         <button id="logout" class="light-button" type="button">Log out</button>
       </nav>
       <p class="eyebrow">THE DAILY BUGLE · ANALYTICS IMPACT</p>
-      <h1><%= articleTitle %></h1>
-      <p>Daily recorded reader views for the last 30 days.</p>
+      <h1><%= articleTitle || 'Untitled draft' %></h1>
+      <p>Reader views over time, with every approved update marked on the timeline.</p>
     </header>
-    
-    <main class="form-main">
-      <section class="analytics-summary" aria-label="Article view summary" style="display: flex; gap: 3rem; margin-bottom: 2rem; justify-content: center; background: #f9fafb; padding: 1.5rem; border-radius: 8px; border: 1px solid #eaeaea;">
-        <div style="display: flex; flex-direction: column; align-items: center;">
-          <span style="font-size: 0.85rem; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 0.2rem;">All-time views</span>
-          <strong style="font-size: 1.8rem; color: #111;"><%= totalViews %></strong>
+
+    <main class="form-main" id="analytics" data-api="/api/editor/articles/<%= articleId %>/analytics" data-range="<%= range %>">
+      <section class="analytics-summary" aria-label="Article view summary">
+        <div>
+          <span>All-time views</span>
+          <strong id="analytics-total"><%= totalViews %></strong>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center;">
-          <span style="font-size: 0.85rem; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 0.2rem;">Last 30 days</span>
-          <strong style="font-size: 1.8rem; color: #111;"><%= periodViews %></strong>
+        <div>
+          <span id="analytics-period-label">Views in range</span>
+          <strong id="analytics-period">–</strong>
+        </div>
+        <div>
+          <span>Updates published in range</span>
+          <strong id="analytics-updates">–</strong>
         </div>
       </section>
-      
+
+      <nav class="analytics-ranges" aria-label="Time range">
+        <% ranges.forEach((item) => { %>
+          <button type="button" class="analytics-range" data-range="<%= item.key %>" aria-pressed="<%= item.key === range ? 'true' : 'false' %>"><%= item.label %></button>
+        <% }) %>
+      </nav>
+
       <section class="panel analytics-panel" aria-labelledby="analytics-chart-title">
-        <div class="analytics-heading" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+        <div class="analytics-heading">
           <div>
-            <p class="eyebrow" style="margin: 0; font-size: 0.75rem; color: #888;">LAST 30 DAYS</p>
-            <h2 id="analytics-chart-title" style="margin: 0.3rem 0 0 0;">Daily reader views</h2>
+            <p class="eyebrow" id="analytics-range-label"></p>
+            <h2 id="analytics-chart-title">Reader views over time</h2>
           </div>
-          <span style="font-size: 0.8rem; color: #999; font-weight: 500;">UTC</span>
+          <ul class="analytics-legend" aria-label="Chart legend">
+            <li><span class="legend-line" aria-hidden="true"></span><span id="analytics-legend-views">Views</span></li>
+            <li><span class="legend-marker" aria-hidden="true"></span>Update approved &amp; published</li>
+          </ul>
         </div>
-        
-        <% if (periodViews === 0) { %>
-          <p class="empty-state" style="text-align: center; padding: 2rem; color: #666;">No recorded views in the last 30 days.</p>
-        <% } %>
-        
-        <div class="analytics-chart" role="img" aria-label="Daily views over the last 30 days" style="display: flex; align-items: flex-end; justify-content: space-between; height: 250px; padding-top: 1rem; border-bottom: 1px solid #ccc; gap: 4px;">
-          <% dailyViews.forEach((day) => { %>
-            <div class="analytics-day" title="<%= day.date %>: <%= day.views %> views" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; height: 100%; justify-content: flex-end;">
-              <span class="analytics-value" style="font-size: 0.75rem; font-weight: 500; color: #444; margin-bottom: 4px; text-align: center; line-height: 1;"><%= day.views || '0' %></span>
-              <span class="analytics-bar" style="--bar-height: <%= Math.max(3, Math.round(day.views / peakViews * 100)) %>%; height: var(--bar-height); width: 80%; max-width: 30px; background-color: #2563eb; border-radius: 3px 3px 0 0;"></span>
-              <span class="analytics-date" style="font-size: 0.65rem; color: #888; margin-top: 6px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;"><%= day.label %></span>
-            </div>
-          <% }) %>
+
+        <div class="analytics-chart" id="analytics-chart-wrap">
+          <canvas id="analytics-chart" tabindex="0" role="img" aria-label="Line chart of reader views over time. The table below lists each update with views before and after."></canvas>
+          <div class="analytics-tooltip" id="analytics-tooltip" hidden></div>
+        </div>
+        <p class="form-message" id="analytics-message" role="status"></p>
+        <noscript><p class="empty-state">The chart needs JavaScript to be enabled.</p></noscript>
+      </section>
+
+      <section class="panel" aria-labelledby="analytics-impact-title">
+        <h2 id="analytics-impact-title">Impact of each update</h2>
+        <p class="analytics-note">Views in the 24 hours before each approval compared with the 24 hours after it. For an update less than 24 hours old, both sides use the time elapsed since the update.</p>
+        <div class="analytics-table-wrap">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th scope="col">Publication</th>
+                <th scope="col">Approved at</th>
+                <th scope="col">Compared window</th>
+                <th scope="col" class="num">Views before</th>
+                <th scope="col" class="num">Views after</th>
+                <th scope="col" class="num">Change</th>
+              </tr>
+            </thead>
+            <tbody id="analytics-impact"></tbody>
+          </table>
         </div>
       </section>
     </main>
     <script src="/js/reporter-dashboard.js" defer></script>
+    <script src="/js/analytics.js" defer></script>
   </body>
 </html>

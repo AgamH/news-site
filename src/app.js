@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const articleRoutes = require('./routes/articleRoutes');
 const reporterRoutes = require('./routes/reporterRoutes');
 const editorRoutes = require('./routes/editorRoutes');
+const reporterApiRoutes = require('./routes/reporterApiRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
@@ -35,6 +36,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reporter', reporterApiRoutes);
 
 // Logged-in work areas, matching the redirect targets public/js/auth.js already uses.
 app.use('/reporter', reporterRoutes);

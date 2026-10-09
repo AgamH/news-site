@@ -264,6 +264,22 @@ main.form-main {
   white-space: nowrap;
 }
 
+.autosave-status {
+  min-height: 1.3rem;
+  margin: 0;
+  color: #595959;
+  font: 0.85rem Arial, sans-serif;
+}
+
+.autosave-status[data-state="saved"] {
+  color: #287341;
+}
+
+.autosave-status[data-state="error"] {
+  color: #a51d25;
+  font-weight: 600;
+}
+
 .review-actions {
   display: grid;
   gap: 0.9rem;

@@ -18,9 +18,12 @@ const publishedSnapshotSchema = new mongoose.Schema(
 
 const articleSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true, trim: true, maxlength: 200 },
-    summary: { type: String, required: true, trim: true, maxlength: 400 },
-    content: { type: String, required: true, trim: true },
+    // The working copy is autosaved while the reporter types, so it may be incomplete.
+    // Completeness is enforced by parseArticleInput before a manual save or a submission,
+    // and the public snapshot (publishedSnapshotSchema) still requires every field.
+    title: { type: String, default: '', trim: true, maxlength: 200 },
+    summary: { type: String, default: '', trim: true, maxlength: 400 },
+    content: { type: String, default: '', trim: true },
     imageUrl: { type: String, default: '', trim: true },
     category: { type: String, required: true, enum: CATEGORIES },
 

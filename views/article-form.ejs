@@ -30,6 +30,7 @@
           data-mode="<%= mode %>"
           data-action-url="<%= actionUrl %>"
           data-submit-url="<%= typeof submitUrl !== 'undefined' ? submitUrl : '' %>"
+          data-article-id="<%= article ? article._id : '' %>"
           <% if (locked) { %>data-locked="true"<% } %>
         >
           <label class="wide">Title
@@ -56,6 +57,10 @@
             <textarea name="content" rows="12" required <% if (locked) { %>disabled<% } %>><%= typeof articleRaw !== 'undefined' && articleRaw ? articleRaw.content : '' %></textarea>
           </label>
           
+          <% if (currentUser.role === 'reporter' && !locked) { %>
+            <p id="autosave-status" class="autosave-status wide" role="status" aria-live="polite"></p>
+          <% } %>
+
           <div class="card-actions wide">
             <button type="submit" name="intent" value="save" <% if (locked) { %>disabled<% } %>><%= mode === 'create' ? 'Save draft' : 'Save changes' %></button>
             <% if (typeof submitUrl !== 'undefined' && submitUrl) { %>
@@ -76,5 +81,8 @@
     </main>
     
     <script src="/js/reporter-dashboard.js" defer></script>
+    <% if (currentUser.role === 'reporter' && !locked) { %>
+      <script src="/js/article-autosave.js" defer></script>
+    <% } %>
   </body>
 </html>

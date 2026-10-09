@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { Article, ARTICLE_STATUSES, EDITABLE_STATUSES, CATEGORIES } = require('../models/articleModel');
-const { parseArticleInput } = require('../utils/articleInput');
+const { parseArticleInput, parseArticleDraft } = require('../utils/articleInput');
 const { httpError } = require('../utils/httpError');
 
 const PAGE_SIZE = 20;
@@ -122,4 +122,39 @@ async function updateArticle(req, res) {
   return res.redirect(`/reporter/${article._id}/edit?notice=saved`);
 }
 
-module.exports = { showDashboard, showNewForm, showEditForm, createArticle, updateArticle };
+/** Autosave, first save of a new article: POST /api/reporter/articles */
+async function autosaveCreate(req, res) {
+  const draft = parseArticleDraft(req.body);
+  if (!draft.title && !draft.summary && !draft.content) throw httpError(400, 'Nothing to save yet.');
+  const article = await Article.create({
+    ...draft,
+    reporter: req.user.id,
+    reporterName: req.user.name,
+  });
+  return res.status(201).json({ id: article._id.toString(), savedAt: article.updatedAt });
+}
+
+/** Autosave of an existing article's working copy: PUT /api/reporter/articles/:id */
+async function autosaveUpdate(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) throw httpError(404, 'Article not found.');
+  const article = await Article.findOne({ _id: req.params.id, reporter: req.user.id });
+  if (!article) throw httpError(404, 'Article not found.');
+  if (!EDITABLE_STATUSES.includes(article.status)) {
+    throw httpError(409, 'This article cannot be edited while it is pending review.');
+  }
+
+  // Only the working copy changes: the status and the live snapshot are untouched.
+  Object.assign(article, parseArticleDraft(req.body));
+  await article.save();
+  return res.json({ id: article._id.toString(), savedAt: article.updatedAt });
+}
+
+module.exports = {
+  showDashboard,
+  showNewForm,
+  showEditForm,
+  createArticle,
+  updateArticle,
+  autosaveCreate,
+  autosaveUpdate,
+};

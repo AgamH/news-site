@@ -43,4 +43,6 @@ app.use('/editor', editorRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+app.use(express.static(path.join(__dirname, '../public')));
+
 module.exports = app;

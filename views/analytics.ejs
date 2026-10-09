@@ -1,0 +1,60 @@
+<%# הצהרת HTML5 %>
+<!doctype html>
+<%# אלמנט השורש %>
+<html lang="en">
+  <%# ראש המסמך %>
+  <head>
+    <%# קידוד UTF-8 %>
+    <meta charset="UTF-8" />
+    <%# viewport לרספונסיביות %>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <%# כותרת הלשונית %>
+    <title><%= title %> — The Daily Bugle</title>
+    <%# קובץ העיצוב %>
+    <link rel="stylesheet" href="/styles.css" />
+  <%# סוף הראש %>
+  </head>
+  <%# גוף הדף %>
+  <body>
+    <%# כותרת עליונה קומפקטית %>
+    <header class="compact-header">
+      <%# סרגל חשבון %>
+      <nav class="account-bar" aria-label="Account">
+        <%# חזרה לעמוד הבדיקה של הכתבה הספציפית %>
+        <a class="nav-link" href="/editor/<%= articleId %>">← Back to review</a>
+        <%# שם המשתמש %>
+        <span>Signed in as <strong><%= currentUser.name %></strong> · editor</span>
+        <%# כפתור יציאה %>
+        <button id="logout" class="light-button" type="button">Log out</button>
+      <%# סוף הסרגל %>
+      </nav>
+      <%# כיתוב קטן %>
+      <p class="eyebrow">THE DAILY BUGLE · ANALYTICS IMPACT</p>
+      <%# כותרת - שם הכתבה %>
+      <h1><%= articleTitle %></h1>
+      <%# הסבר קצר על הגרף %>
+      <p>Daily views over time. Dashed lines mark when an update was published.</p>
+    <%# סוף הכותרת העליונה %>
+    </header>
+    <%# תוכן ראשי %>
+    <main class="form-main">
+      <%# פאנל הגרף %>
+      <section class="panel">
+        <%# אזור הודעות (טוען/שגיאה/סיכום) %>
+        <p id="analytics-message" class="form-message" role="status"></p>
+        <%# אלמנט ה-canvas שעליו Chart.js מצייר את הגרף %>
+        <div class="chart-wrap"><canvas id="views-chart" height="110"></canvas></div>
+      <%# סוף הפאנל %>
+      </section>
+    <%# סוף התוכן הראשי %>
+    </main>
+    <%# טעינת ספריית Chart.js מ-CDN (בלי defer - נטענת לפני שהסקריפט שלנו רץ) %>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+    <%# מעבירים את מזהה הכתבה ל-JavaScript %>
+    <script>window.articleId = <%- JSON.stringify(articleId) %>;</script>
+    <%# סקריפט בניית הגרף %>
+    <script src="/analytics.js" defer></script>
+  <%# סוף הגוף %>
+  </body>
+<%# סוף המסמך %>
+</html>

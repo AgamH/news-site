@@ -31,11 +31,11 @@
   padding-block-end: 1.5rem;
   border-block-end: 1px solid var(--rule);
   font-size: 0.9375rem;
-  color: var(--ink-soft);
+  color: var(--paper);
 }
 
 .article-meta strong {
-  color: var(--ink);
+  color: #fff;
 }
 
 .article-hero {

@@ -1,97 +1,120 @@
+const mongoose = require('mongoose');
+
 const { Article } = require('../models/articleModel');
 const { Comment } = require('../models/commentModel');
 const { recordView } = require('../models/articleViewModel');
-const { readUserFromCookie } = require('../middleware/authMiddleware');
-const { getOrCreateDeviceId } = require('../middleware/deviceMiddleware');
-const { getArticleFeed } = require('./articleController');
-const { httpError } = require('../utils/httpError');
-const { logEvent } = require('../services/logService');
+const { showLogDashboard } = require('./adminLogController');
 
-const REGISTERABLE_ROLES = ['reporter', 'editor'];
-const ROLE_HOME = { reporter: '/reporter', editor: '/editor' };
+const PAGE_SIZE = 20;
+
+function toCard(article) {
+  const published = article.published || {};
+
+  return {
+    id: article._id.toString(),
+    title: published.title || article.title || 'Untitled article',
+    summary: published.summary || article.summary || '',
+    category: published.category || article.category || 'General',
+    reporterName: article.reporterName || 'Daily Bugle Staff',
+    imageUrl: published.imageUrl || '',
+    publishedAt: published.publishedAt || null,
+    views: article.views || 0,
+  };
+}
 
 async function showHomePage(req, res) {
-  const { data, page, limit, total, hasMore, filters, categories } = await getArticleFeed(req, res);
-  res.render('index', {
-    title: 'The Web Daily',
-    currentUser: req.user, // set by attachUserIfPresent on this route
-    categories,
-    articles: data,
-    pagination: { page, limit, total, hasMore },
-    filters,
+  const filter = { 'published.publishedAt': { $ne: null } };
+
+  const [articles, total] = await Promise.all([
+    Article.find(filter)
+      .sort({ 'published.publishedAt': -1, _id: -1 })
+      .limit(PAGE_SIZE)
+      .exec(),
+    Article.countDocuments(filter).exec(),
+  ]);
+
+  return res.render('index', {
+    title: 'The Daily Bugle',
+    articles: articles.map((article) => toCard(article)),
+    total,
+    currentUser: req.user
+      ? (typeof req.user.toJSON === 'function'
+          ? req.user.toJSON()
+          : req.user)
+      : null,
   });
 }
 
 async function showArticlePage(req, res) {
-  const article = await Article.findOne({ _id: req.params.id, published: { $ne: null } }).lean();
-  if (!article) throw httpError(404, 'That article does not exist or is no longer published.');
-
-  const deviceId = getOrCreateDeviceId(req, res);
-
-  // A view failing to record should never take the article page down with it.
-  try {
-    await Promise.all([
-      Article.updateOne({ _id: article._id }, { $inc: { views: 1 } }),
-      recordView(article._id, deviceId),
-    ]);
-  } catch (error) {
-    logEvent({
-      level: 'warn',
-      message: 'Failed to record an article view',
-      source: 'articles',
-      req,
-      metadata: { articleId: String(article._id) },
-      stack: error.stack,
-    }).catch(() => {});
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(404).send('Article not found.');
   }
 
-  const commentDocs = await Comment.find({ article: article._id }).sort({ createdAt: -1 }).limit(200).lean();
-  const comments = commentDocs.map((comment) => ({
-    id: String(comment._id),
-    authorName: comment.authorName,
-    body: comment.body,
-    createdAt: comment.createdAt,
-  }));
+  const article = await Article.findOne({
+    _id: req.params.id,
+    'published.publishedAt': { $ne: null },
+  }).exec();
 
-  res.render('article', {
+  if (!article) {
+    return res.status(404).send('Article not found.');
+  }
+
+  await Promise.all([
+    Article.updateOne(
+      { _id: article._id },
+      { $inc: { views: 1 } }
+    ).exec(),
+    recordView(article._id),
+  ]);
+
+  const comments = await Comment.find({
+    article: article._id,
+  })
+    .sort({ createdAt: 1 })
+    .lean()
+    .exec();
+
+  return res.render('article', {
     title: article.published.title,
-    currentUser: req.user, // set by attachUserIfPresent on this route
+    currentUser: req.user
+      ? (typeof req.user.toJSON === 'function'
+          ? req.user.toJSON()
+          : req.user)
+      : null,
     article: {
-      id: String(article._id),
-      title: article.published.title,
-      summary: article.published.summary,
-      content: article.published.content,
-      imageUrl: article.published.imageUrl,
-      category: article.published.category,
-      reporterName: article.reporterName,
-      publishedAt: article.published.publishedAt,
-      views: article.views + 1, // reflects the increment above without a second read
+      ...toCard(article),
+      content: article.published.content || '',
     },
-    comments,
+    comments: comments.map((comment) => ({
+      id: comment._id.toString(),
+      authorName: comment.authorName,
+      body: comment.body,
+      createdAt: comment.createdAt,
+    })),
   });
 }
 
-/** Not wrapped in asyncHandler by the routes (see pageRoutes.js) — must stay synchronous. */
-function showLoginPage(req, res) {
-  const user = readUserFromCookie(req);
-  if (user) return res.redirect(ROLE_HOME[user.role] || '/');
-  res.render('login', { title: 'Log in' });
+function showLoginPage(_req, res) {
+  return res.render('login', { title: 'Log in' });
 }
 
-/** Not wrapped in asyncHandler by the routes — must stay synchronous. */
 function showRegistrationPage(req, res) {
-  const role = req.params.role;
-  if (!REGISTERABLE_ROLES.includes(role)) throw httpError(404, 'Page not found.');
+  if (!['reporter', 'editor'].includes(req.params.role)) {
+    return res.redirect('/register/reporter');
+  }
 
-  const user = readUserFromCookie(req);
-  if (user) return res.redirect(ROLE_HOME[user.role] || '/');
+  const role = req.params.role === 'editor' ? 'editor' : 'reporter';
 
-  res.render('register', { title: `Create a ${role} account`, role });
+  return res.render('register', {
+    title: `Create ${role} account`,
+    role,
+  });
 }
 
-/** Not wrapped in asyncHandler by the routes; reached after authenticatePage + requirePageRole('editor'). */
-function showLogDashboard(req, res) {
-  res.render('admin-log', { title: 'Operational Logs', currentUser: req.user });
-}
-
-module.exports = { showHomePage, showArticlePage, showLoginPage, showRegistrationPage, showLogDashboard };
+module.exports = {
+  showHomePage,
+  showArticlePage,
+  showLoginPage,
+  showRegistrationPage,
+  showLogDashboard,
+};

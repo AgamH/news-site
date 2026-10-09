@@ -24,7 +24,6 @@
   const form = $('#feed-controls');
   const list = $('#story-list');
   const template = $('#story-template');
-  const sentinel = $('#sentinel');
   const loader = $('#loader');
   const statusEl = $('#feed-status');
   const emptyState = $('#empty-state');
@@ -160,7 +159,7 @@
     errorState.hidden = !state.failed;
     emptyState.hidden = !(count === 0 && !busy && !state.failed);
     endMarker.hidden = !(count > 0 && !state.hasMore && !busy && !state.failed);
-    loadMoreBtn.hidden = !(!observer && state.hasMore && !busy && !state.failed);
+    loadMoreBtn.hidden = !state.hasMore || busy || state.failed;
 
     if (busy && state.refreshing) {
       statusEl.textContent = 'Loading stories';
@@ -258,28 +257,8 @@
         state.loading = false;
         state.refreshing = false;
         updateUi();
-        // If the sentinel is still on screen (tall window, few results) fetch the next page too.
-        if (state.hasMore && !state.failed) watchAgain();
       }
     }
-  }
-
-  /* Infinite scroll: an invisible sentinel below the list tells us when the reader is close to the end. */
-  let observer = null;
-  if ('IntersectionObserver' in window) {
-    observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) load();
-      },
-      { rootMargin: SCROLL_LOOKAHEAD }
-    );
-    observer.observe(sentinel);
-  }
-
-  function watchAgain() {
-    if (!observer) return;
-    observer.unobserve(sentinel); // re-observing makes the browser report the current state again
-    observer.observe(sentinel);
   }
 
   /* ------------------------------------------------------------------ */

@@ -198,3 +198,28 @@ h1 {
   color: var(--ink);
   font-size: 0.9375rem;
 }
+
+/* Daily Bugle sign-in and registration pages */
+.auth-page { min-height:100vh; background:#f7f4ed; color:#171717; font-family:Arial,sans-serif; }
+.auth-brand { min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1rem; background:#171717; border-bottom:6px solid #c91d25; color:#fff; text-align:center; }
+.auth-brand .wordmark { color:#fff; text-decoration:none; font:bold clamp(2.4rem,7vw,4.8rem)/1 Georgia,serif; letter-spacing:-.04em; }
+.auth-brand .wordmark span { color:#e62429; }
+.auth-brand p { margin:.7rem 0 0; color:#ddd; font-size:.75rem; font-weight:bold; letter-spacing:.18em; }
+.auth-main { width:min(100% - 2rem,540px); margin:0 auto; padding:2.5rem 0 4rem; }
+.auth-panel { background:#fff; border:1px solid #d7d0c5; border-top:5px solid #c91d25; box-shadow:0 12px 30px #00000010; padding:clamp(1.4rem,5vw,2.5rem); }
+.back-link { display:inline-block; margin-bottom:1.5rem; color:#555; font-size:.9rem; }
+.auth-kicker { margin:0 0 .4rem; }
+.auth-panel h1 { margin:.2rem 0 .5rem; font:800 clamp(2rem,6vw,2.7rem)/1.1 Georgia,serif; }
+.auth-intro { color:#555; margin-bottom:1.5rem; }
+.auth-form { display:grid; gap:.55rem; }
+.auth-form label { margin-top:.35rem; font-size:.85rem; font-weight:800; }
+.auth-form input { width:100%; min-width:0; padding:.85rem .9rem; border:1px solid #c9c2b8; border-radius:4px; background:#fff; font:inherit; }
+.password-field { display:flex; gap:.5rem; }
+.password-field input { flex:1; }
+.password-toggle { border:1px solid #bbb; border-radius:4px; background:#eee; color:#222; padding:0 .9rem; }
+.auth-submit { margin-top:.7rem; width:100%; border-radius:4px; background:#c91d25; }
+.auth-submit:hover { background:#94151c; }
+.auth-submit:disabled { opacity:.65; cursor:wait; }
+.form-message { min-height:1.2rem; margin:.25rem 0 0; color:#b3261e; font-size:.9rem; }
+.auth-links { display:grid; gap:.8rem; margin-top:1.25rem; padding-top:1.25rem; border-top:1px solid #e0d9cf; }
+.auth-links a { color:#a91820; font-weight:bold; }

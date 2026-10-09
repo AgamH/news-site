@@ -11,7 +11,8 @@
     <%# כותרת הלשונית %>
     <title><%= title %> — The Daily Bugle</title>
     <%# קובץ העיצוב %>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/newsroom.css" />
   <%# סוף הראש %>
   </head>
   <%# גוף הדף %>
@@ -62,25 +63,31 @@
         <p><%= draft.content %></p>
 
         <%# אם הכתבה ממתינה לאישור כרגע: %>
+        <% if (notice) { %><p class="workflow-notice" role="status"><%= notice %></p><% } %>
         <% if (article.status === 'pending') { %>
           <%# כפתורי הפעולה %>
+          <form class="review-actions" method="post" action="/editor/<%= article.id %>/review">
           <div class="card-actions">
             <%# כפתור אישור ופרסום %>
-            <button id="approve-button" type="button">Approve &amp; publish</button>
+            <button type="submit" name="decision" value="approve">Approve &amp; publish</button>
             <%# כפתור החזרה לתיקונים %>
-            <button id="return-button" type="button" class="secondary">Return for fixes</button>
+            <button type="submit" name="decision" value="return" class="secondary">Return for fixes</button>
           <%# סוף כפתורי הפעולה %>
           </div>
-          <%# שדה ההערה לכתב - מוסתר כברירת מחדל, נחשף בלחיצה ראשונה על 'החזר' %>
-          <label class="wide" id="return-note-wrap" hidden>Note to the reporter
+          <label class="wide">Note to the reporter (required when returning)
             <%# אזור הטקסט של ההערה %>
-            <textarea id="return-note" rows="3"></textarea>
+            <textarea name="editorNote" rows="3" maxlength="1000"></textarea>
           <%# סוף השדה %>
           </label>
+          </form>
         <%# סוף התנאי %>
         <% } %>
         <%# כפתור מחיקה - זמין תמיד (לא רק ב-pending) %>
-        <button id="delete-button" type="button" class="secondary">Delete this article</button>
+        <% if (!article.isLive) { %>
+          <form method="post" action="/editor/<%= article.id %>/delete" onsubmit="return confirm('Delete this unpublished article permanently?')">
+            <button type="submit" class="secondary">Delete unpublished article</button>
+          </form>
+        <% } %>
         <%# אזור הודעות %>
         <p id="review-message" class="form-message" role="status"></p>
       <%# סוף הפאנל הראשון %>
@@ -111,9 +118,8 @@
     <%# סוף התוכן הראשי %>
     </main>
     <%# מעבירים את מזהה הכתבה ל-JavaScript של הדפדפן %>
-    <script>window.articleId = <%- JSON.stringify(article.id) %>;</script>
     <%# סקריפט הפעולות (אישור/החזרה/מחיקה) %>
-    <script src="/editor-review.js" defer></script>
+    <script src="/js/reporter-dashboard.js" defer></script>
   <%# סוף הגוף %>
   </body>
 <%# סוף המסמך %>

@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const app = require('./app');
 const { connectDatabase } = require('./config/database');
-const { Article } = require('./models/articleModel');
+const { Article, rethemeDemoArticlesIfNeeded } = require('./models/articleModel');
 const { seedDemoUsersIfEmpty } = require('./models/userModel');
 const { seedArticlesIfEmpty } = require('./models/articleModel');
 const { seedViewsIfEmpty } = require('./models/articleViewModel');
@@ -29,6 +29,8 @@ async function seedDemoData() {
   const users = await seedDemoUsersIfEmpty();
   const reporters = users.filter((user) => user.role === 'reporter');
   await seedArticlesIfEmpty(reporters, { total: 500 });
+  const rethemedCount = await rethemeDemoArticlesIfNeeded();
+  if (rethemedCount) console.log(`Updated ${rethemedCount} generated demo articles with comic-book stories.`);
 
   // Re-queried rather than trusting seedArticlesIfEmpty's return value, which is undefined
   // once articles already exist — this keeps view/comment seeding correct even if the

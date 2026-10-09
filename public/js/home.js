@@ -30,11 +30,13 @@
   const errorState = $('#feed-error');
   const errorText = $('#feed-error-text');
   const endMarker = $('#end-marker');
+  const sentinel = $('#sentinel');
   const loadMoreBtn = $('#load-more');
 
   const DEFAULTS = { q: '', category: '', seen: 'all', sort: 'newest' };
   const SEARCH_DELAY_MS = 350;
   const SCROLL_LOOKAHEAD = '0px 0px 800px 0px'; // start loading ~800px before the bottom
+  let observer = null;
 
   const dateFmt = new Intl.DateTimeFormat(config.locale, { dateStyle: 'medium', timeZone: config.timeZone });
   const timeFmt = new Intl.DateTimeFormat(config.locale, { timeStyle: 'short', timeZone: config.timeZone });
@@ -159,7 +161,7 @@
     errorState.hidden = !state.failed;
     emptyState.hidden = !(count === 0 && !busy && !state.failed);
     endMarker.hidden = !(count > 0 && !state.hasMore && !busy && !state.failed);
-    loadMoreBtn.hidden = !state.hasMore || busy || state.failed;
+    loadMoreBtn.hidden = Boolean(observer) || !state.hasMore || busy || state.failed;
 
     if (busy && state.refreshing) {
       statusEl.textContent = 'Loading stories';
@@ -257,8 +259,25 @@
         state.loading = false;
         state.refreshing = false;
         updateUi();
+        if (state.hasMore && !state.failed) watchAgain();
       }
     }
+  }
+
+  if ('IntersectionObserver' in window && sentinel) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) load();
+      },
+      { rootMargin: SCROLL_LOOKAHEAD }
+    );
+    observer.observe(sentinel);
+  }
+
+  function watchAgain() {
+    if (!observer || !sentinel) return;
+    observer.unobserve(sentinel);
+    observer.observe(sentinel);
   }
 
   /* ------------------------------------------------------------------ */

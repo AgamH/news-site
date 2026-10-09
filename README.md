@@ -70,7 +70,7 @@ Follow these steps to run the system locally on your machine.
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/AgamH/news-site
     cd news-site
     ```
 

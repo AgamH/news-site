@@ -1,135 +1,80 @@
-<%# הצהרת HTML5 %>
 <!doctype html>
-<%# אלמנט השורש %>
 <html lang="en">
-  <%# ראש המסמך %>
   <head>
-    <%# קידוד UTF-8 %>
     <meta charset="UTF-8" />
-    <%# viewport לרספונסיביות %>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <%# כותרת הלשונית (שונה לפי מצב: 'New article' או 'Edit article') %>
     <title><%= title %> — The Daily Bugle</title>
-    <%# קובץ העיצוב %>
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/newsroom.css" />
-  <%# סוף הראש %>
   </head>
-  <%# גוף הדף %>
   <body>
-    <%# כותרת עליונה קומפקטית %>
     <header class="compact-header">
-      <%# סרגל חשבון %>
       <nav class="account-bar" aria-label="Account">
-        <%# קישור חזרה - משתנה לפי מי שפתח את הטופס (כתב/עורך) %>
         <a class="nav-link" href="<%= cancelUrl %>">← Back</a>
-        <%# שם המשתמש ותפקידו %>
         <span>Signed in as <strong><%= currentUser.name %></strong> · <%= currentUser.role %></span>
-        <%# כפתור יציאה %>
         <button id="logout" class="light-button" type="button">Log out</button>
-      <%# סוף הסרגל %>
       </nav>
-      <%# כיתוב קטן %>
       <p class="eyebrow">THE DAILY BUGLE</p>
-      <%# כותרת (New/Edit article) %>
       <h1><%= title %></h1>
-    <%# סוף הכותרת העליונה %>
     </header>
-    <%# תוכן ראשי %>
+    
     <main class="form-main">
-      <%# אם הטופס נעול (למשל כתבה שממתינה לאישור): %>
       <% if (notice) { %><p class="workflow-notice" role="status"><%= notice %></p><% } %>
+      
       <% if (locked) { %>
-        <%# מציגים את סיבת הנעילה במקום אזהרה %>
         <div class="empty-state"><%= lockedReason %></div>
-      <%# סוף התנאי %>
       <% } %>
-      <%# אם במצב 'missing' (כתבה לא נמצאה) - לא מציגים טופס בכלל: %>
+      
       <% if (mode !== 'missing') { %>
-        <%# הטופס. data-attributes מעבירים ל-JavaScript את המצב וכתובות הפעולה %>
         <form id="article-form" class="panel article-form" method="post" action="<%= actionUrl %>"
-          <%# מצב: יצירה או עריכה %>
           data-mode="<%= mode %>"
-          <%# כתובת לשמירה %>
           data-action-url="<%= actionUrl %>"
-          <%# כתובת לשליחה לאישור (אם רלוונטי) %>
           data-submit-url="<%= typeof submitUrl !== 'undefined' ? submitUrl : '' %>"
-          <%# אם נעול - מסמנים זאת גם ב-data attribute %>
           <% if (locked) { %>data-locked="true"<% } %>
-        <%# סגירת תגית הפתיחה של הטופס %>
         >
-          <%# שדה הכותרת %>
           <label class="wide">Title
-            <%# ערך קיים אם עורכים, נעול אם locked %>
             <input name="title" maxlength="200" required value="<%= article ? article.title : '' %>" <% if (locked) { %>disabled<% } %> />
-          <%# שדה התקציר %>
           </label>
-          <%# textarea עם הערך הקיים %>
+          
           <label class="wide">Summary (shown on the homepage)
-            <%# שדה הקטגוריה %>
             <textarea name="summary" maxlength="400" rows="2" required <% if (locked) { %>disabled<% } %>><%= article ? article.summary : '' %></textarea>
-          <%# תפריט הקטגוריה %>
           </label>
-          <%# פתיחת ה-select %>
+          
           <label>Category
-            <%# לולאה על כל הקטגוריות %>
             <select name="category" required <% if (locked) { %>disabled<% } %>>
-              <%# אופציה - מסומנת כנבחרת אם זו הקטגוריה הנוכחית %>
               <% categories.forEach((category) => { %>
-                <%# סוף הלולאה %>
                 <option value="<%= category %>" <%= article && article.category === category ? 'selected' : '' %>><%= category %></option>
-              <%# סוף ה-select %>
               <% }) %>
-            <%# סוף שדה הקטגוריה %>
             </select>
-          <%# שדה כתובת תמונה (אופציונלי) %>
           </label>
-          <%#  %>
+          
           <label>Image URL (optional)
-            <%# סוף השדה %>
             <input name="imageUrl" type="url" value="<%= article && typeof articleRaw !== 'undefined' && articleRaw ? articleRaw.imageUrl : '' %>" <% if (locked) { %>disabled<% } %> />
-          <%# שדה תוכן הכתבה המלא %>
           </label>
-          <%#  %>
+          
           <label class="wide">Full article content
-            <%# סוף השדה %>
             <textarea name="content" rows="12" required <% if (locked) { %>disabled<% } %>><%= typeof articleRaw !== 'undefined' && articleRaw ? articleRaw.content : '' %></textarea>
-          <%# אזור כפתורי הפעולה %>
           </label>
-          <%# כפתור שמירה - הטקסט משתנה לפי המצב %>
+          
           <div class="card-actions wide">
-            <%# אם יש כתובת שליחה לאישור (מצב עריכת כתב): %>
             <button type="submit" name="intent" value="save" <% if (locked) { %>disabled<% } %>><%= mode === 'create' ? 'Save draft' : 'Save changes' %></button>
-            <%# כפתור 'שלח לאישור עורך' %>
             <% if (typeof submitUrl !== 'undefined' && submitUrl) { %>
-              <%# סוף התנאי %>
               <button type="submit" name="intent" value="submit" class="secondary" <% if (locked) { %>disabled<% } %>>Submit for editor approval</button>
-            <%# סוף אזור הפעולות %>
             <% } %>
-          <%# סגירת הטופס %>
           </div>
-        <%# סוף התנאי 'לא missing' %>
         </form>
-      <%# אזור הודעות (שגיאות/הצלחה) %>
       <% } %>
-      <%# אם הכתבה הוחזרה לתיקונים ויש הערת עורך: %>
+      
       <p id="form-message" class="form-message" role="status"></p>
-      <%# פאנל נפרד שמציג את ההערה %>
+      
       <% if (article && article.status === 'returned' && article.editorNote) { %>
-        <%# כותרת הפאנל %>
         <div class="panel">
-          <%# תוכן ההערה %>
           <h2>Editor's note</h2>
-          <%# סוף הפאנל %>
           <p><%= article.editorNote %></p>
-        <%# סוף התנאי %>
         </div>
-      <%# סוף התוכן הראשי %>
       <% } %>
-    <%# סקריפט הטיפול בטופס %>
     </main>
-    <%# סוף הגוף %>
+    
     <script src="/js/reporter-dashboard.js" defer></script>
-  <%# סוף המסמך %>
   </body>
 </html>

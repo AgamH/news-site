@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 const { logEvent } = require('../services/logService');
 
-/** A handful of noisy, low-value paths that don't need a log line per hit. */
 const SKIP_PATHS = new Set(['/favicon.ico']);
 
 function requestLogger(req, res, next) {

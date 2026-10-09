@@ -4,9 +4,6 @@ const articleViewSchema = new mongoose.Schema(
   {
     article: { type: mongoose.Schema.Types.ObjectId, ref: 'Article', required: true, index: true },
     viewedAt: { type: Date, default: Date.now, index: true },
-    // Optional: which anonymous browser recorded this view (see middleware/deviceMiddleware.js).
-    // null for seeded demo data, so seeded history never makes real visitors' articles look "seen".
-    // Powers the home feed's seen/unseen filter; not used by the analytics chart, which only needs viewedAt.
     deviceId: { type: String, default: null, index: true },
   },
   { versionKey: false },
@@ -21,7 +18,7 @@ async function recordView(articleId, deviceId = null) {
   await ArticleView.create({ article: articleId, deviceId: deviceId || null });
 }
 
-/** Article ids this device has viewed before, for the home feed's seen/unseen filter. */
+/** Article ids this device has viewed before, for the home feed's seen/unseen */
 async function getSeenArticleIds(deviceId) {
   if (!deviceId) return [];
   return ArticleView.distinct('article', { deviceId });

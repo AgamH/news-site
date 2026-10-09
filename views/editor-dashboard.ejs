@@ -1,120 +1,68 @@
-<%# הצהרת HTML5 %>
 <!doctype html>
-<%# אלמנט השורש %>
 <html lang="en">
-  <%# ראש המסמך %>
   <head>
-    <%# קידוד UTF-8 %>
     <meta charset="UTF-8" />
-    <%# viewport לרספונסיביות %>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <%# כותרת הלשונית %>
     <title><%= title %> — The Daily Bugle</title>
-    <%# קובץ העיצוב %>
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/newsroom.css" />
-  <%# סוף הראש %>
   </head>
-  <%# גוף הדף %>
   <body>
-    <%# כותרת עליונה קומפקטית %>
     <header class="compact-header">
-      <%# סרגל חשבון %>
       <nav class="account-bar" aria-label="Account">
-        <%# חזרה לפיד החדשות %>
         <a class="nav-link" href="/">← News feed</a>
-        <%# שם המשתמש (תמיד editor כאן) %>
         <span>Signed in as <strong><%= currentUser.name %></strong> · editor</span>
-        <%# קישור ללוגים %>
         <a class="nav-link" href="/admin/logs">Application logs</a>
-        <%# כפתור יציאה %>
         <button id="logout" class="light-button" type="button">Log out</button>
-      <%# סוף הסרגל %>
       </nav>
-      <%# כיתוב קטן %>
       <p class="eyebrow">THE DAILY BUGLE · EDITOR</p>
-      <%# כותרת %>
       <h1>Editor desk</h1>
-    <%# סוף הכותרת העליונה %>
     </header>
-    <%# תוכן ראשי %>
+    
     <main class="admin-main">
       <% if (notice) { %><p class="workflow-notice" role="status"><%= notice %></p><% } %>
-      <%# פאנל הסינון %>
+      
       <section class="panel log-filter-panel">
-        <%# כותרת %>
         <h2>Filter by status</h2>
-        <%# שורת קישורי הסינון %>
         <nav class="status-filters">
-          <%# לולאה על כל המצבים האפשריים (מהקונטרולר) %>
           <% statuses.forEach((status) => { %>
-            <%# קישור לכל מצב, מודגש אם נבחר %>
             <a href="/editor?status=<%= status %>" class="<%= statusFilter === status ? 'active' : '' %>"><%= status %></a>
-          <%# סוף הלולאה %>
           <% }) %>
-        <%# סוף השורה %>
         </nav>
-      <%# סוף הפאנל %>
       </section>
-      <%# אזור הכתבות %>
+      
       <section class="log-results">
-        <%# שורת כותרת %>
         <div class="section-heading">
-          <%# כותרת עם שם הסינון הנוכחי %>
           <h2>Articles — <%= statusFilter %></h2>
-          <%# מונה %>
           <span><%= total %> article<%= total === 1 ? '' : 's' %></span>
-        <%# סוף שורת הכותרת %>
         </div>
-        <%# אם אין כתבות: %>
+        
         <% if (!articles.length) { %>
-          <%# הודעה %>
           <div class="empty-state">No articles with this status.</div>
-        <%# סוף התנאי %>
         <% } %>
-        <%# לולאה על הכתבות: %>
+        
         <% articles.forEach((article) => { %>
-          <%# כרטיס %>
           <article class="card">
-            <%# כותרת כקישור לעמוד הבדיקה %>
-            <h3><a class="card-link" href="/editor/<%= article.id %>"><%= article.title %></a></h3>
-            <%# פרטים %>
+            <h3><a class="card-link" href="/editor/<%= article._id || article.id %>"><%= article.title %></a></h3>
             <dl class="meta">
-              <%# תג הסטטוס %>
               <div><dt>Status</dt><dd><span class="level level-<%= article.status %>"><%= article.status %></span></dd></div>
-              <%# שם הכתב (בניגוד לדשבורד הכתב, כאן חשוב לדעת מי כתב) %>
               <div><dt>Reporter</dt><dd><%= article.reporterName %></dd></div>
-              <%# קטגוריה %>
               <div><dt>Category</dt><dd><%= article.category %></dd></div>
-              <%# האם חי באתר %>
               <div><dt>Live on site</dt><dd><%= article.isLive ? 'Yes' : 'No' %></dd></div>
-            <%# סוף הפרטים %>
             </dl>
-          <%# סוף הכרטיס %>
           </article>
-        <%# סוף הלולאה %>
         <% }) %>
-        <%# אם יש כמה עמודים: %>
+        
         <% if (pages > 1) { %>
-          <%# ניווט עמודים %>
           <nav class="pagination">
-            <%# לולאה על מספרי העמודים %>
             <% for (let p = 1; p <= pages; p++) { %>
-              <%# קישור לכל עמוד %>
               <a href="/editor?status=<%= statusFilter %>&page=<%= p %>" class="<%= p === page ? 'active' : '' %>"><%= p %></a>
-            <%# סוף הלולאה %>
             <% } %>
-          <%# סוף הניווט %>
           </nav>
-        <%# סוף התנאי %>
         <% } %>
-      <%# סוף אזור הכתבות %>
       </section>
-    <%# סוף התוכן הראשי %>
     </main>
-    <%# סקריפט היציאה %>
+    
     <script src="/js/reporter-dashboard.js" defer></script>
-  <%# סוף הגוף %>
   </body>
-<%# סוף המסמך %>
 </html>

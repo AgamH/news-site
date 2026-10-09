@@ -1,67 +1,60 @@
-<%# הצהרת HTML5 %>
 <!doctype html>
-<%# אלמנט השורש %>
 <html lang="en">
-  <%# ראש המסמך %>
   <head>
-    <%# קידוד UTF-8 %>
     <meta charset="UTF-8" />
-    <%# viewport לרספונסיביות %>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <%# כותרת הלשונית %>
     <title><%= title %> — The Daily Bugle</title>
-    <%# קובץ העיצוב %>
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/newsroom.css" />
-  <%# סוף הראש %>
   </head>
-  <%# גוף הדף %>
   <body>
-    <%# כותרת עליונה קומפקטית %>
     <header class="compact-header">
-      <%# סרגל חשבון %>
       <nav class="account-bar" aria-label="Account">
-        <%# חזרה לעמוד הבדיקה של הכתבה הספציפית %>
         <a class="nav-link" href="/editor/<%= articleId %>">← Back to review</a>
-        <%# שם המשתמש %>
         <span>Signed in as <strong><%= currentUser.name %></strong> · editor</span>
-        <%# כפתור יציאה %>
         <button id="logout" class="light-button" type="button">Log out</button>
-      <%# סוף הסרגל %>
       </nav>
-      <%# כיתוב קטן %>
       <p class="eyebrow">THE DAILY BUGLE · ANALYTICS IMPACT</p>
-      <%# כותרת - שם הכתבה %>
       <h1><%= articleTitle %></h1>
-      <%# הסבר קצר על הגרף %>
       <p>Daily recorded reader views for the last 30 days.</p>
-    <%# סוף הכותרת העליונה %>
     </header>
-    <%# תוכן ראשי %>
+    
     <main class="form-main">
-      <%# פאנל הגרף %>
-      <section class="analytics-summary" aria-label="Article view summary">
-        <div><span>All-time views</span><strong><%= totalViews %></strong></div>
-        <div><span>Last 30 days</span><strong><%= periodViews %></strong></div>
+      <section class="analytics-summary" aria-label="Article view summary" style="display: flex; gap: 3rem; margin-bottom: 2rem; justify-content: center; background: #f9fafb; padding: 1.5rem; border-radius: 8px; border: 1px solid #eaeaea;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <span style="font-size: 0.85rem; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 0.2rem;">All-time views</span>
+          <strong style="font-size: 1.8rem; color: #111;"><%= totalViews %></strong>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <span style="font-size: 0.85rem; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 0.2rem;">Last 30 days</span>
+          <strong style="font-size: 1.8rem; color: #111;"><%= periodViews %></strong>
+        </div>
       </section>
+      
       <section class="panel analytics-panel" aria-labelledby="analytics-chart-title">
-        <div class="analytics-heading"><div><p class="eyebrow">LAST 30 DAYS</p><h2 id="analytics-chart-title">Daily reader views</h2></div><span>UTC</span></div>
-        <% if (periodViews === 0) { %><p class="empty-state">No recorded views in the last 30 days.</p><% } %>
-        <div class="analytics-chart" role="img" aria-label="Daily views over the last 30 days">
+        <div class="analytics-heading" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+          <div>
+            <p class="eyebrow" style="margin: 0; font-size: 0.75rem; color: #888;">LAST 30 DAYS</p>
+            <h2 id="analytics-chart-title" style="margin: 0.3rem 0 0 0;">Daily reader views</h2>
+          </div>
+          <span style="font-size: 0.8rem; color: #999; font-weight: 500;">UTC</span>
+        </div>
+        
+        <% if (periodViews === 0) { %>
+          <p class="empty-state" style="text-align: center; padding: 2rem; color: #666;">No recorded views in the last 30 days.</p>
+        <% } %>
+        
+        <div class="analytics-chart" role="img" aria-label="Daily views over the last 30 days" style="display: flex; align-items: flex-end; justify-content: space-between; height: 250px; padding-top: 1rem; border-bottom: 1px solid #ccc; gap: 4px;">
           <% dailyViews.forEach((day) => { %>
-            <div class="analytics-day" title="<%= day.date %>: <%= day.views %> views">
-              <span class="analytics-value"><%= day.views || '' %></span>
-              <span class="analytics-bar" style="--bar-height: <%= Math.max(3, Math.round(day.views / peakViews * 100)) %>%"></span>
-              <span class="analytics-date"><%= day.label %></span>
+            <div class="analytics-day" title="<%= day.date %>: <%= day.views %> views" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; height: 100%; justify-content: flex-end;">
+              <span class="analytics-value" style="font-size: 0.75rem; font-weight: 500; color: #444; margin-bottom: 4px; text-align: center; line-height: 1;"><%= day.views || '0' %></span>
+              <span class="analytics-bar" style="--bar-height: <%= Math.max(3, Math.round(day.views / peakViews * 100)) %>%; height: var(--bar-height); width: 80%; max-width: 30px; background-color: #2563eb; border-radius: 3px 3px 0 0;"></span>
+              <span class="analytics-date" style="font-size: 0.65rem; color: #888; margin-top: 6px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;"><%= day.label %></span>
             </div>
           <% }) %>
         </div>
-      <%# סוף הפאנל %>
       </section>
-    <%# סוף התוכן הראשי %>
     </main>
     <script src="/js/reporter-dashboard.js" defer></script>
-  <%# סוף הגוף %>
   </body>
-<%# סוף המסמך %>
 </html>

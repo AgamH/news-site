@@ -1,161 +1,83 @@
-<%# הצהרת HTML5 %>
 <!doctype html>
-<%# אלמנט השורש %>
 <html lang="en">
-  <%# ראש המסמך %>
   <head>
-    <%# קידוד UTF-8 %>
     <meta charset="UTF-8" />
-    <%# viewport לרספונסיביות %>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <%# כותרת הלשונית %>
     <title><%= title %></title>
-    <%# קובץ העיצוב %>
     <link rel="stylesheet" href="/css/styles.css" />
-  <%# סוף הראש %>
+    <link rel="stylesheet" href="/css/newsroom.css" />
   </head>
-  <%# גוף הדף %>
   <body>
-    <%# כותרת עליונה קומפקטית %>
     <header class="compact-header">
-      <%# סרגל חשבון %>
       <nav class="account-bar" aria-label="Account">
-        <%# חזרה לפיד החדשות %>
         <a class="nav-link" href="/">← News feed</a>
-        <%# שם המשתמש המחובר (הדף מוגן בשרת לעורכים בלבד, לכן התפקיד תמיד editor) %>
         <span>Signed in as <strong><%= currentUser.name %></strong> · editor</span>
-        <%# כפתור יציאה שמטופל ב-admin-logs.js %>
         <button id="logout" class="light-button" type="button">Log out</button>
-      <%# סוף הסרגל %>
       </nav>
-      <%# כיתוב קטן %>
       <p class="eyebrow">THE DAILY BUGLE · ADMINISTRATION</p>
-      <%# כותרת ראשית %>
       <h1><%= title %></h1>
-      <%# הסבר קצר %>
       <p>Search operational events and errors stored in MongoDB.</p>
-    <%# סוף הכותרת העליונה %>
     </header>
-    <%# תוכן ראשי של מסך הלוגים %>
     <main class="admin-main">
-      <%# פאנל הסינון %>
       <section class="panel log-filter-panel">
-        <%# שורת כותרת של הפאנל %>
         <div class="section-heading">
-          <%# כותרת %>
           <h2>Filter logs</h2>
-          <%# כפתור ניקוי סינון %>
           <button id="clear-log-filters" class="secondary" type="button">Clear</button>
-        <%# סוף שורת הכותרת %>
         </div>
-        <%# טופס סינון הלוגים - נשלח ב-AJAX %>
         <form id="log-filter-form">
-          <%# תווית חיפוש חופשי %>
           <label class="wide">Search
-            <%# שדה חיפוש: הודעה, כתובת, אימייל או מזהה בקשה %>
             <input name="q" type="search" placeholder="Message, URL, email or request ID" />
-          <%# סוף התווית %>
           </label>
-          <%# תווית רמה %>
           <label>Level
-            <%# רשימת הרמות %>
             <select name="level">
-              <%# כל הרמות %>
               <option value="">All levels</option>
-              <%# קריטי %>
               <option value="fatal">Fatal</option>
-              <%# שגיאות - נבחר כברירת מחדל (selected) %>
               <option value="error" selected>Errors</option>
-              <%# אזהרות %>
               <option value="warn">Warnings</option>
-              <%# מידע %>
               <option value="info">Information</option>
-            <%# סוף הרשימה %>
             </select>
-          <%# סוף התווית %>
           </label>
-          <%# תווית מקור %>
           <label>Source
-            <%# רשימת מקורות - admin-logs.js ממלא אותה דינמית מהתשובה של השרת %>
             <select id="source-filter" name="source"><option value="">All sources</option></select>
-          <%# סוף התווית %>
           </label>
-          <%# קוד סטטוס (מספר בין 100 ל-599) %>
           <label>Status code<input name="statusCode" type="number" min="100" max="599" placeholder="500" /></label>
-          <%# מזהה בקשה %>
           <label>Request ID<input name="requestId" placeholder="UUID" /></label>
-          <%# מתאריך ושעה %>
           <label>From<input name="from" type="datetime-local" /></label>
-          <%# עד תאריך ושעה %>
           <label>To<input name="to" type="datetime-local" /></label>
-          <%# כפתור הפעלת הסינון %>
           <button class="wide" type="submit">Apply filters</button>
-        <%# סוף הטופס %>
         </form>
-      <%# סוף פאנל הסינון %>
       </section>
 
-      <%# אזור התוצאות %>
       <section class="log-results">
-        <%# שורת כותרת %>
         <div class="section-heading">
-          <%# כותרת %>
           <h2>MongoDB log entries</h2>
-          <%# מונה רשומות שמתעדכן ע"י admin-logs.js %>
           <span id="log-count">Loading…</span>
-        <%# סוף שורת הכותרת %>
         </div>
-        <%# אזור הודעות שגיאה %>
         <p id="log-message" class="form-message" role="status"></p>
-        <%# עטיפה שמאפשרת גלילה אופקית במסכים קטנים %>
         <div class="log-table-wrap">
-          <%# טבלת הלוגים %>
           <table class="log-table">
-            <%# ראש הטבלה %>
             <thead>
-              <%# כותרות העמודות: זמן, רמה, מקור, הודעה, בקשה, משתמש %>
               <tr><th>Time</th><th>Level</th><th>Source</th><th>Message</th><th>Request</th><th>User</th></tr>
-            <%# סוף ראש הטבלה %>
             </thead>
-            <%# גוף הטבלה - השורות מוזרקות ע"י admin-logs.js %>
             <tbody id="log-rows"></tbody>
-          <%# סוף הטבלה %>
           </table>
-        <%# סוף העטיפה %>
         </div>
-        <%# הודעת 'אין תוצאות' - מוסתרת עד שאין רשומות %>
         <div id="no-logs" class="empty-state" hidden>No log entries match the selected filters.</div>
-        <%# ניווט בין עמודי הלוגים %>
         <nav class="pagination" aria-label="Log pages">
-          <%# כפתור עמוד קודם %>
           <button id="previous-page" class="secondary" type="button">Previous</button>
-          <%# תווית העמוד הנוכחי %>
           <span id="page-label">Page 1</span>
-          <%# כפתור עמוד הבא %>
           <button id="next-page" class="secondary" type="button">Next</button>
-        <%# סוף הניווט %>
         </nav>
-      <%# סוף אזור התוצאות %>
       </section>
-    <%# סוף התוכן הראשי %>
     </main>
 
-    <%# חלון דיאלוג מובנה של HTML להצגת פרטי לוג מלאים %>
     <dialog id="log-dialog">
-      <%# טופס method=dialog: לחיצה על הכפתור סוגרת את הדיאלוג בלי JavaScript %>
       <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
-      <%# כותרת הדיאלוג %>
       <h2>Log details</h2>
-      <%# אזור טקסט מעוצב שבו מוצג ה-JSON המלא של הלוג %>
       <pre id="log-details"></pre>
-    <%# סוף הדיאלוג %>
     </dialog>
 
-    <%# טעינת DOMPurify - admin-logs.js משתמש בה לניקוי כל נתון שמגיע מבקשות GET לפני הכנסתו ל-HTML %>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" defer></script>
-    <%# טעינת הסקריפט של מסך הלוגים %>
     <script src="/js/admin-logs.js" defer></script>
-  <%# סוף הגוף %>
   </body>
-<%# סוף המסמך %>
 </html>

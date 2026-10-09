@@ -15,7 +15,7 @@
       <% if (currentUser) { %>
         <span>Welcome, <strong><%= currentUser.name || currentUser.username || 'Reader' %></strong></span>
         <% if (currentUser.role === 'reporter') { %><a href="/reporter">Reporter dashboard</a><% } %>
-        <% if (currentUser.role === 'editor') { %><a href="/editor">Editor dashboard</a><a href="/admin/logs">System logs</a><% } %>
+        <% if (currentUser.role === 'editor') { %><a href="/editor">Editor dashboard</a><a href="/admin/logs">Application logs</a><% } %>
         <button id="logout" class="btn btn--quiet" type="button">Log out</button>
       <% } else { %>
         <a href="/login">Reporter / editor log in</a>
@@ -86,7 +86,14 @@
       <template id="story-template"><article class="story" data-id="" style="--h: 0"><div class="story-media" data-f="media" data-initial="N"><img data-f="image" src="" alt="" width="600" height="400" loading="lazy" decoding="async"></div><div class="story-body"><p class="story-category"><a data-f="category" href="/">News</a></p><h3 class="story-title"><a data-f="title" href="/">Untitled</a></h3><p class="story-summary" data-f="summary"></p><div class="story-meta"><span class="story-byline">By <span data-f="reporter">Staff</span></span><time data-f="date" hidden></time><span class="story-flag" data-f="flag" hidden>Viewed</span></div></div></article></template>
       <p id="empty-state" class="empty-state" hidden>No headlines found. Try another search.</p>
       <div id="feed-error" class="feed-error" hidden><p id="feed-error-text">Could not load stories.</p><button id="retry" class="btn" type="button">Try again</button></div>
-      <p id="loader" class="loader" hidden>Loading more headlines…</p><div id="end-marker" class="end-marker" hidden>You're all caught up.</div><div id="sentinel" aria-hidden="true"></div><button id="load-more" class="btn btn--quiet" type="button" hidden>Load more headlines</button>
+      <p id="loader" class="loader" hidden>Loading more headlines…</p>
+      <div id="end-marker" class="end-marker" hidden>You're all caught up.</div>
+      <div id="sentinel" aria-hidden="true"></div>
+      
+      <div style="display: flex; justify-content: center; margin-top: 3rem; margin-bottom: 2rem; width: 100%;">
+        <button id="load-more" class="btn btn--quiet" type="button" hidden>Load more headlines</button>
+      </div>
+      
     </section>
   </main>
   <footer class="site-footer"><strong>THE DAILY BUGLE</strong><span>Serving New York City — facts, rumors, and everything in between.</span><span>© <%= new Date().getFullYear() %> The Daily Bugle</span></footer>

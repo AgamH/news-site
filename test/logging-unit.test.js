@@ -27,12 +27,14 @@ test('builds safe MongoDB filters for the administrator screen', () => {
     level: 'error',
     source: 'database',
     statusCode: '500',
+    requestId: '  request-123  ',
     q: 'connection (failed)',
     from: '2026-09-01T00:00:00.000Z',
   });
 
   assert.equal(filter.level, 'error');
   assert.equal(filter.statusCode, 500);
+  assert.equal(filter.requestId, 'request-123');
   assert.ok(filter.source instanceof RegExp);
   assert.ok(filter.timestamp.$gte instanceof Date);
   assert.ok(Array.isArray(filter.$or));

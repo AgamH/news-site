@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { escapeRegex, parseListQuery, sanitizeCommentInput } = require('../src/utils/articleValidation');
+const { buildPublishedArticleFilter } = require('../src/controllers/articleController');
 
 test('escapeRegex neutralizes regex special characters', () => {
   const pattern = new RegExp(escapeRegex('a.b*c?'), 'i');
@@ -20,6 +21,24 @@ test('parseListQuery rejects an unknown category rather than passing it through'
 test('parseListQuery accepts a known category', () => {
   const result = parseListQuery({ category: 'Sports' });
   assert.equal(result.category, 'Sports');
+});
+
+test('parseListQuery accepts every additional category shown on the homepage', () => {
+  assert.equal(parseListQuery({ category: 'Entertainment' }).category, 'Entertainment');
+  assert.equal(parseListQuery({ category: 'Science' }).category, 'Science');
+});
+
+test('published article search covers title, summary, and reporter safely', () => {
+  const filter = buildPublishedArticleFilter({ q: 'Dana (editor)', category: 'Science' });
+  const clauses = filter.$or;
+
+  assert.equal(filter['published.category'], 'Science');
+  assert.deepEqual(clauses.map((condition) => Object.keys(condition)[0]), [
+    'published.title',
+    'published.summary',
+    'reporterName',
+  ]);
+  assert.ok(clauses.every((condition) => Object.values(condition)[0].$regex === escapeRegex('Dana (editor)')));
 });
 
 test('parseListQuery falls back to a safe value for an invalid seen/sort', () => {

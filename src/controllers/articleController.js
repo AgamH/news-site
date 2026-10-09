@@ -19,6 +19,20 @@ function toFeedItem(doc, seenSet) {
   };
 }
 
+function buildPublishedArticleFilter({ q, category }) {
+  const filter = { published: { $ne: null } };
+  if (category) filter['published.category'] = category;
+  if (q) {
+    const pattern = { $regex: escapeRegex(q), $options: 'i' };
+    filter.$or = [
+      { 'published.title': pattern },
+      { 'published.summary': pattern },
+      { reporterName: pattern },
+    ];
+  }
+  return filter;
+}
+
 /**
  * The query behind the home feed: published articles only, filtered/sorted/paginated.
  * Shared by the JSON API (listPublishedArticles) and the server-rendered first page
@@ -31,9 +45,7 @@ async function getArticleFeed(req, res) {
   const { q, category, seen, sort, page, limit } = parseListQuery(req.query);
   const deviceId = getOrCreateDeviceId(req, res);
 
-  const filter = { published: { $ne: null } };
-  if (category) filter['published.category'] = category;
-  if (q) filter['published.title'] = { $regex: escapeRegex(q), $options: 'i' };
+  const filter = buildPublishedArticleFilter({ q, category });
 
   // Needed both to apply the seen/unseen filter and to flag each returned article either way.
   const seenIds = deviceId ? await getSeenArticleIds(deviceId) : [];
@@ -101,4 +113,4 @@ async function postComment(req, res) {
   res.status(201).json({ comment });
 }
 
-module.exports = { getArticleFeed, listPublishedArticles, getPublishedArticle, postComment };
+module.exports = { buildPublishedArticleFilter, getArticleFeed, listPublishedArticles, getPublishedArticle, postComment };

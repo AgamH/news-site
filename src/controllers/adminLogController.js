@@ -5,6 +5,13 @@ const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
 const LEVELS = ['info', 'warn', 'error', 'fatal'];
 
+function showLogDashboard(req, res) {
+  return res.render('admin-logs', {
+    title: 'Application logs',
+    currentUser: req.user,
+  });
+}
+
 function clampInt(value, { min, max, fallback }) {
   const n = Number.parseInt(value, 10);
   if (!Number.isFinite(n)) return fallback;
@@ -17,7 +24,7 @@ function parseDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function buildFilter({ level, source, q, from, to, statusCode } = {}) {
+function buildFilter({ level, source, q, from, to, statusCode, requestId } = {}) {
   const filter = {};
 
   if (LEVELS.includes(level)) filter.level = level;
@@ -29,6 +36,9 @@ function buildFilter({ level, source, q, from, to, statusCode } = {}) {
 
   const statusValue = Number.parseInt(statusCode, 10);
   if (Number.isFinite(statusValue)) filter.statusCode = statusValue;
+
+  const requestIdValue = String(requestId || '').trim();
+  if (requestIdValue) filter.requestId = requestIdValue;
 
   const text = String(q || '').trim();
   if (text) {
@@ -53,18 +63,19 @@ function buildFilter({ level, source, q, from, to, statusCode } = {}) {
 }
 
 async function listLogs(req, res) {
-  const { level, source, q, from, to, statusCode } = req.query;
+  const { level, source, q, from, to, statusCode, requestId } = req.query;
   const page = clampInt(req.query.page, { min: 1, max: Number.MAX_SAFE_INTEGER, fallback: 1 });
   const limit = clampInt(req.query.limit, { min: 1, max: MAX_PAGE_SIZE, fallback: DEFAULT_PAGE_SIZE });
 
-  const filter = buildFilter({ level, source, q, from, to, statusCode });
+  const filter = buildFilter({ level, source, q, from, to, statusCode, requestId });
 
-  const [data, total] = await Promise.all([
+  const [data, total, sources] = await Promise.all([
     SystemLog.find(filter).sort({ timestamp: -1 }).skip((page - 1) * limit).limit(limit).lean(),
     SystemLog.countDocuments(filter),
+    SystemLog.distinct('source'),
   ]);
 
-  res.json({ data, page, limit, total, hasMore: page * limit < total });
+  res.json({ data, page, limit, total, hasMore: page * limit < total, sources: sources.sort() });
 }
 
 async function getLog(req, res) {
@@ -73,4 +84,4 @@ async function getLog(req, res) {
   res.json(log);
 }
 
-module.exports = { listLogs, getLog, buildFilter };
+module.exports = { showLogDashboard, listLogs, getLog, buildFilter };

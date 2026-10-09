@@ -99,7 +99,7 @@ async function populateSources() {
     const response = await fetch('/api/admin/logs?limit=1', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
     if (!response.ok) return;
     const payload = await response.json();
-    const sources = [...new Set((payload.data || []).map((entry) => entry.source).filter(Boolean))];
+    const sources = payload.sources || [];
     const currentValue = sourceSelect.value;
     sourceSelect.innerHTML = '<option value="">All sources</option>' + sources.map((source) => `<option value="${escapeHtml(source)}">${escapeHtml(source)}</option>`).join('');
     if (currentValue) sourceSelect.value = currentValue;

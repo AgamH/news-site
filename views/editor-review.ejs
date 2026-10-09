@@ -1,126 +1,82 @@
-<%# הצהרת HTML5 %>
 <!doctype html>
-<%# אלמנט השורש %>
 <html lang="en">
-  <%# ראש המסמך %>
+  
   <head>
-    <%# קידוד UTF-8 %>
     <meta charset="UTF-8" />
-    <%# viewport לרספונסיביות %>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <%# כותרת הלשונית %>
     <title><%= title %> — The Daily Bugle</title>
-    <%# קובץ העיצוב %>
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/newsroom.css" />
-  <%# סוף הראש %>
   </head>
-  <%# גוף הדף %>
+
   <body>
-    <%# כותרת עליונה קומפקטית %>
     <header class="compact-header">
-      <%# סרגל חשבון %>
       <nav class="account-bar" aria-label="Account">
-        <%# חזרה לדשבורד העורך %>
         <a class="nav-link" href="/editor">← Editor desk</a>
-        <%# שם המשתמש %>
         <span>Signed in as <strong><%= currentUser.name %></strong> · editor</span>
-        <%# כפתור יציאה %>
         <button id="logout" class="light-button" type="button">Log out</button>
-      <%# סוף הסרגל %>
       </nav>
-      <%# כיתוב קטן %>
       <p class="eyebrow">THE DAILY BUGLE · EDITOR</p>
-      <%# כותרת ראשית - כותרת הטיוטה (מה שממתין לבדיקה) %>
-      <h1><%= draft.title %></h1>
-      <%# פסקת מידע: %>
-      <p>
-        <%# תג הסטטוס %>
+      <h1 style="text-align: center;"><%= draft.title %></h1>
+      
+      <p style="text-align: center;">
         Status: <span class="level level-<%= article.status %>"><%= article.status %></span>
-        <%# שם הכתב %>
         · By <%= article.reporterName %>
-        <%# קישור לטופס העריכה %>
-        · <a href="/editor/<%= article.id %>/edit">Edit this article</a>
-        <%# קישור לגרף האנליטיקס %>
-        · <a href="/editor/<%= article.id %>/analytics">View analytics</a>
-        <%# אם יש גרסה חיה - קישור לצפייה בעמוד הציבורי %>
-        <% if (article.isLive) { %> · <a href="/articles/<%= article.id %>">View live page</a><% } %>
-      <%# סוף הפסקה %>
       </p>
-    <%# סוף הכותרת העליונה %>
+      
+      <div class="header-actions" style="display: flex; justify-content: center; gap: 1rem; border-top: 1px solid #eaeaea; padding-top: 1.2rem; margin-top: 1.2rem; margin-bottom: 1rem;">
+        <a href="/editor/<%= article._id || article.id %>/edit" class="btn btn-small" style="font-size: 0.85rem; padding: 0.4rem 1rem; background: #eee; text-decoration: none; border-radius: 4px; color: #333; font-weight: 500;">Edit this article</a>
+        
+        <a href="/editor/<%= article._id || article.id %>/analytics" class="btn btn-small" style="font-size: 0.85rem; padding: 0.4rem 1rem; background: #eee; text-decoration: none; border-radius: 4px; color: #333; font-weight: 500;">View analytics</a>
+        
+        <% if (article.isLive) { %> 
+          <a href="/articles/<%= article._id || article.id %>" class="btn btn-small" target="_blank" style="font-size: 0.85rem; padding: 0.4rem 1rem; background: #eee; text-decoration: none; border-radius: 4px; color: #333; font-weight: 500;">View live page</a>
+        <% } %>
+      </div>
     </header>
-    <%# תוכן ראשי - שני פאנלים זה לצד זה %>
+
     <main class="admin-main">
-      <%# פאנל ראשון: התוכן שהוגש %>
       <section class="panel">
-        <%# כותרת הפאנל %>
         <h2>Submitted content (pending review)</h2>
-        <%# קטגוריית הטיוטה %>
         <p><strong>Category:</strong> <%= draft.category %></p>
-        <%# תקציר הטיוטה %>
         <p><strong>Summary:</strong> <%= draft.summary %></p>
-        <%# תוכן הטיוטה %>
         <p><%= draft.content %></p>
 
-        <%# אם הכתבה ממתינה לאישור כרגע: %>
         <% if (notice) { %><p class="workflow-notice" role="status"><%= notice %></p><% } %>
+        
         <% if (article.status === 'pending') { %>
-          <%# כפתורי הפעולה %>
-          <form class="review-actions" method="post" action="/editor/<%= article.id %>/review">
-          <div class="card-actions">
-            <%# כפתור אישור ופרסום %>
-            <button type="submit" name="decision" value="approve">Approve &amp; publish</button>
-            <%# כפתור החזרה לתיקונים %>
-            <button type="submit" name="decision" value="return" class="secondary">Return for fixes</button>
-          <%# סוף כפתורי הפעולה %>
-          </div>
-          <label class="wide">Note to the reporter (required when returning)
-            <%# אזור הטקסט של ההערה %>
-            <textarea name="editorNote" rows="3" maxlength="1000"></textarea>
-          <%# סוף השדה %>
-          </label>
+          <form class="review-actions" method="post" action="/editor/<%= article._id || article.id %>/review">
+            <div class="card-actions">
+              <button type="submit" name="decision" value="approve">Approve &amp; publish</button>
+              <button type="submit" name="decision" value="return" class="secondary">Return for fixes</button>
+            </div>
+            <label class="wide">Note to the reporter (required when returning)
+              <textarea name="editorNote" rows="3" maxlength="1000"></textarea>
+            </label>
           </form>
-        <%# סוף התנאי %>
         <% } %>
-        <%# כפתור מחיקה - זמין תמיד (לא רק ב-pending) %>
+        
         <% if (!article.isLive) { %>
-          <form method="post" action="/editor/<%= article.id %>/delete" onsubmit="return confirm('Delete this unpublished article permanently?')">
+          <form method="post" action="/editor/<%= article._id || article.id %>/delete" onsubmit="return confirm('Delete this unpublished article permanently?')">
             <button type="submit" class="secondary">Delete unpublished article</button>
           </form>
         <% } %>
-        <%# אזור הודעות %>
         <p id="review-message" class="form-message" role="status"></p>
-      <%# סוף הפאנל הראשון %>
       </section>
 
-      <%# פאנל שני: מה כרגע חי באתר הציבורי %>
       <section class="panel">
-        <%# כותרת %>
         <h2>Currently live on the site</h2>
-        <%# אם יש גרסה חיה: %>
         <% if (live) { %>
-          <%# תאריך הפרסום %>
           <p><strong>Published:</strong> <%= new Date(live.publishedAt).toLocaleString() %></p>
-          <%# קטגוריית הגרסה החיה %>
           <p><strong>Category:</strong> <%= live.category %></p>
-          <%# תקציר הגרסה החיה %>
           <p><strong>Summary:</strong> <%= live.summary %></p>
-          <%# תוכן הגרסה החיה %>
           <p><%= live.content %></p>
-        <%# אחרת (הכתבה מעולם לא פורסמה): %>
         <% } else { %>
-          <%# הודעה מתאימה %>
           <div class="empty-state">This article has never been published — nothing is live yet.</div>
-        <%# סוף התנאי %>
         <% } %>
-      <%# סוף הפאנל השני %>
       </section>
-    <%# סוף התוכן הראשי %>
     </main>
-    <%# מעבירים את מזהה הכתבה ל-JavaScript של הדפדפן %>
-    <%# סקריפט הפעולות (אישור/החזרה/מחיקה) %>
+    
     <script src="/js/reporter-dashboard.js" defer></script>
-  <%# סוף הגוף %>
   </body>
-<%# סוף המסמך %>
 </html>

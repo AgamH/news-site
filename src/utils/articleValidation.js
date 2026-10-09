@@ -23,11 +23,6 @@ function isValidCategory(value) {
   return CATEGORIES.includes(value);
 }
 
-/**
- * Normalizes the home feed's query params (?q=&category=&seen=&sort=&page=&limit=) into a
- * clean, bounded shape. Unknown or out-of-range values silently fall back to a sane default
- * rather than erroring, since a stale or hand-edited URL should never crash the feed.
- */
 function parseListQuery(query = {}) {
   const q = String(query.q || '').trim().slice(0, MAX_SEARCH_LENGTH);
   const category = isValidCategory(query.category) ? query.category : '';
@@ -38,7 +33,6 @@ function parseListQuery(query = {}) {
   return { q, category, seen, sort, page, limit };
 }
 
-/** Validates a posted comment body/author. Returns { body, authorName } or throws via the caller's own httpError. */
 function sanitizeCommentInput({ body, authorName }) {
   const cleanBody = String(body || '').trim();
   const cleanName = String(authorName || '').trim().slice(0, MAX_COMMENT_NAME_LENGTH);

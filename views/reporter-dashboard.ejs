@@ -1,0 +1,128 @@
+<%# הצהרת HTML5 %>
+<!doctype html>
+<%# אלמנט השורש %>
+<html lang="en">
+  <%# ראש המסמך %>
+  <head>
+    <%# קידוד UTF-8 %>
+    <meta charset="UTF-8" />
+    <%# viewport לרספונסיביות %>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <%# כותרת הלשונית %>
+    <title><%= title %> — The Daily Bugle</title>
+    <%# קובץ העיצוב %>
+    <link rel="stylesheet" href="/styles.css" />
+  <%# סוף הראש %>
+  </head>
+  <%# גוף הדף %>
+  <body>
+    <%# כותרת עליונה קומפקטית %>
+    <header class="compact-header">
+      <%# סרגל חשבון %>
+      <nav class="account-bar" aria-label="Account">
+        <%# חזרה לפיד החדשות %>
+        <a class="nav-link" href="/">← News feed</a>
+        <%# שם המשתמש (תמיד reporter בדף הזה, כי הנתיב מוגן) %>
+        <span>Signed in as <strong><%= currentUser.name %></strong> · reporter</span>
+        <%# כפתור יציאה %>
+        <button id="logout" class="light-button" type="button">Log out</button>
+      <%# סוף הסרגל %>
+      </nav>
+      <%# כיתוב קטן %>
+      <p class="eyebrow">THE DAILY BUGLE · REPORTER</p>
+      <%# כותרת %>
+      <h1>My articles</h1>
+    <%# סוף הכותרת העליונה %>
+    </header>
+    <%# תוכן ראשי %>
+    <main class="admin-main">
+      <%# פאנל הסינון %>
+      <section class="panel log-filter-panel">
+        <%# כותרת הפאנל %>
+        <h2>Filter by status</h2>
+        <%# שורת קישורי הסינון לפי מצב %>
+        <nav class="status-filters">
+          <%# 'הכל' - מודגש אם זה הסינון הנוכחי %>
+          <a href="/reporter" class="<%= statusFilter === '' ? 'active' : '' %>">All</a>
+          <%# 'בהכנה' %>
+          <a href="/reporter?status=draft" class="<%= statusFilter === 'draft' ? 'active' : '' %>">Draft</a>
+          <%# 'ממתינה' %>
+          <a href="/reporter?status=pending" class="<%= statusFilter === 'pending' ? 'active' : '' %>">Pending</a>
+          <%# 'פורסמה' %>
+          <a href="/reporter?status=published" class="<%= statusFilter === 'published' ? 'active' : '' %>">Published</a>
+          <%# 'הוחזרה' %>
+          <a href="/reporter?status=returned" class="<%= statusFilter === 'returned' ? 'active' : '' %>">Returned</a>
+        <%# סוף שורת הקישורים %>
+        </nav>
+        <%# כפתור 'כתבה חדשה' שמוביל לטופס היצירה %>
+        <a class="wide" href="/reporter/new"><button class="wide" type="button">+ New article</button></a>
+      <%# סוף הפאנל %>
+      </section>
+      <%# אזור הכתבות %>
+      <section class="log-results">
+        <%# שורת כותרת %>
+        <div class="section-heading">
+          <%# כותרת %>
+          <h2>Articles</h2>
+          <%# מונה הכתבות (עם יחיד/רבים) %>
+          <span><%= total %> article<%= total === 1 ? '' : 's' %></span>
+        <%# סוף שורת הכותרת %>
+        </div>
+        <%# אם אין כתבות בתצוגה הנוכחית: %>
+        <% if (!articles.length) { %>
+          <%# הודעה מתאימה %>
+          <div class="empty-state">No articles in this view yet.</div>
+        <%# סוף התנאי %>
+        <% } %>
+        <%# לולאה על כל הכתבות: %>
+        <% articles.forEach((article) => { %>
+          <%# כרטיס כתבה %>
+          <article class="card">
+            <%# כותרת הכתבה כקישור לעריכה %>
+            <h3><a class="card-link" href="/reporter/<%= article.id %>/edit"><%= article.title %></a></h3>
+            <%# רשימת פרטים %>
+            <dl class="meta">
+              <%# תג הסטטוס (הצבע משתנה לפי class דינמי level-<status>) %>
+              <div><dt>Status</dt><dd><span class="level level-<%= article.status %>"><%= article.status %></span></dd></div>
+              <%# קטגוריה %>
+              <div><dt>Category</dt><dd><%= article.category %></dd></div>
+              <%# האם חיה כרגע באתר הציבורי %>
+              <div><dt>Live on site</dt><dd><%= article.isLive ? 'Yes' : 'No' %></dd></div>
+              <%# מספר צפיות %>
+              <div><dt>Views</dt><dd><%= article.views %></dd></div>
+            <%# סוף רשימת הפרטים %>
+            </dl>
+            <%# אם הכתבה הוחזרה ויש הערת עורך: %>
+            <% if (article.status === 'returned' && article.editorNote) { %>
+              <%# מציגים אותה בכרטיס %>
+              <p class="note">Editor's note: <%= article.editorNote %></p>
+            <%# סוף התנאי %>
+            <% } %>
+          <%# סוף הכרטיס %>
+          </article>
+        <%# סוף הלולאה %>
+        <% }) %>
+        <%# אם יש יותר מעמוד אחד: %>
+        <% if (pages > 1) { %>
+          <%# ניווט עמודים %>
+          <nav class="pagination">
+            <%# לולאה על כל מספרי העמודים %>
+            <% for (let p = 1; p <= pages; p++) { %>
+              <%# קישור לכל עמוד, מודגש אם זה העמוד הנוכחי %>
+              <a href="/reporter?status=<%= statusFilter %>&page=<%= p %>" class="<%= p === page ? 'active' : '' %>"><%= p %></a>
+            <%# סוף הלולאה %>
+            <% } %>
+          <%# סוף הניווט %>
+          </nav>
+        <%# סוף התנאי %>
+        <% } %>
+      <%# סוף אזור הכתבות %>
+      </section>
+    <%# סוף התוכן הראשי %>
+    </main>
+    <%# סקריפט היציאה המשותף %>
+    <script src="/dashboard.js" defer></script>
+  <%# סוף הגוף %>
+  </body>
+<%# סוף המסמך %>
+</html>

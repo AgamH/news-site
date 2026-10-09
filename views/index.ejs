@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The Daily Bugle — New York's most unreliable source.">
+  <title>The Daily Bugle | Latest Headlines</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/home.css">
+</head>
+<body>
+  <header class="masthead site-header">
+    <nav class="account-bar" aria-label="Main navigation">
+      <a href="/">Home</a>
+      <% if (currentUser) { %>
+        <span>Welcome, <strong><%= currentUser.name || currentUser.username || 'Reader' %></strong></span>
+        <% if (currentUser.role === 'reporter') { %><a href="/reporter">Reporter dashboard</a><% } %>
+        <% if (currentUser.role === 'editor') { %><a href="/editor">Editor dashboard</a><a href="/admin/logs">System logs</a><% } %>
+        <button id="logout" class="btn btn--quiet" type="button">Log out</button>
+      <% } else { %>
+        <a href="/login">Reporter / editor log in</a>
+      <% } %>
+    </nav>
+    <div class="masthead-inner container">
+      <p class="eyebrow">NEW YORK'S MOST UNRELIABLE SOURCE</p>
+      <h1 class="bugle-masthead">THE DAILY <span>BUGLE</span></h1>
+      <p class="bugle-edition">SPECIAL EDITION · NEW YORK CITY</p>
+      <p class="bugle-tagline">ALL THE NEWS THAT'S FIT TO PRINT… AND A FEW THAT AREN'T.</p>
+    </div>
+  </header>
+
+  <main class="home-layout container">
+    <aside class="home-sidebar">
+      <section class="panel filter-panel" aria-labelledby="filter-title">
+        <div class="section-heading"><h2 id="filter-title">Find the facts</h2><button id="clear-filters" class="btn btn--quiet" type="button">Clear</button></div>
+        <form id="feed-controls" class="feed-controls">
+          <label class="wide">Search<input name="q" type="search" placeholder="Title, summary, reporter…"></label>
+          <label>Category<select name="category"><option value="">All categories</option><option>News</option><option>Politics</option><option>Economy</option><option>Technology</option><option>Sports</option><option>Culture</option><option>Opinion</option><option>Entertainment</option><option>Science</option></select></label>
+          <% if (currentUser) { %><label>Viewed<select name="seen"><option value="all">All articles</option><option value="seen">Already viewed</option><option value="unseen">Not viewed yet</option></select></label><% } else { %><input type="hidden" name="seen" value="all"><% } %>
+          <label class="wide">Sort by<select name="sort"><option value="newest">Newest first</option><option value="popular">Most popular</option></select></label>
+          <button class="btn wide" type="submit">Apply filters</button>
+        </form>
+      </section>
+      <section class="weather-panel" aria-labelledby="weather-title">
+        <p class="weather-kicker">LIVE CONDITIONS</p><h2 id="weather-title">New York Weather</h2>
+        <div id="weather" aria-live="polite" aria-busy="true">
+          <div data-w="body" hidden>
+            <p><strong data-w="city"></strong></p><p class="weather-temp"><span data-w="temp">--</span>°C</p><p data-w="description"></p>
+            <dl class="weather-details"><div><dt>Feels like</dt><dd><span data-w="feels">--</span>°C</dd></div><div><dt>Humidity</dt><dd><span data-w="humidity">--</span>%</dd></div><div><dt>Wind</dt><dd><span data-w="wind">--</span> km/h</dd></div></dl>
+            <p class="weather-updated">Updated <time data-w="updated">--:--</time></p>
+          </div>
+          <div data-w="error" hidden><p>Weather is temporarily unavailable.</p><button id="weather-retry" class="btn" type="button">Try again</button></div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="feed-section" aria-labelledby="headlines-title">
+      <div class="section-heading feed-heading"><div><p class="section-kicker">THE LATEST</p><h2 id="headlines-title">Latest Headlines</h2></div><span id="feed-status" role="status" aria-live="polite"><%= total %> stories</span></div>
+      <div id="story-list" class="story-list" aria-live="polite">
+        <% articles.forEach((article) => { %>
+          <article class="story<%= article.seen ? ' is-seen' : '' %>" data-id="<%= article.id %>" style="--h: 0">
+            <div class="story-media<%= article.imageUrl ? '' : ' is-missing' %>" data-f="media" data-initial="<%= (article.category || 'N').charAt(0).toUpperCase() %>">
+              <% if (article.imageUrl) { %><img data-f="image" src="<%= article.imageUrl %>" alt="" width="600" height="400" loading="lazy" decoding="async"><% } %>
+            </div>
+            <div class="story-body">
+              <p class="story-category"<%= article.category ? '' : ' hidden' %>><a data-f="category" href="/?category=<%= encodeURIComponent(article.category || '') %>"><%= article.category || '' %></a></p>
+              <h3 class="story-title"><a data-f="title" href="/articles/<%= article.id %>"><%= article.title || 'Untitled' %></a></h3>
+              <p class="story-summary" data-f="summary"><%= article.summary || '' %></p>
+              <div class="story-meta"><span class="story-byline">By <span data-f="reporter"><%= article.reporterName || 'Daily Bugle Staff' %></span></span><time data-f="date"<% if (article.publishedAt) { %> datetime="<%= new Date(article.publishedAt).toISOString() %>"<% } else { %> hidden<% } %>><%= article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('en-US') : '' %></time><span class="story-flag" data-f="flag" hidden>Viewed</span></div>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+      <template id="story-template"><article class="story" data-id="" style="--h: 0"><div class="story-media" data-f="media" data-initial="N"><img data-f="image" src="" alt="" width="600" height="400" loading="lazy" decoding="async"></div><div class="story-body"><p class="story-category"><a data-f="category" href="/">News</a></p><h3 class="story-title"><a data-f="title" href="/">Untitled</a></h3><p class="story-summary" data-f="summary"></p><div class="story-meta"><span class="story-byline">By <span data-f="reporter">Staff</span></span><time data-f="date" hidden></time><span class="story-flag" data-f="flag" hidden>Viewed</span></div></div></article></template>
+      <p id="empty-state" class="empty-state" hidden>No headlines found. Try another search.</p>
+      <div id="feed-error" class="feed-error" hidden><p id="feed-error-text">Could not load stories.</p><button id="retry" class="btn" type="button">Try again</button></div>
+      <p id="loader" class="loader" hidden>Loading more headlines…</p><div id="end-marker" class="end-marker" hidden>You're all caught up.</div><div id="sentinel" aria-hidden="true"></div><button id="load-more" class="btn btn--quiet" type="button" hidden>Load more headlines</button>
+    </section>
+  </main>
+  <footer class="site-footer"><strong>THE DAILY BUGLE</strong><span>Serving New York City — facts, rumors, and everything in between.</span><span>© <%= new Date().getFullYear() %> The Daily Bugle</span></footer>
+  <script>window.HOME_CONFIG = { initial: { page: 1, total: <%- Number(total) || 0 %>, hasMore: <%- (Number(total) > articles.length) ? 'true' : 'false' %> }, articleUrl: '/articles/', articlesApi: '/api/articles', weatherApi: '/api/weather', logoutApi: '/api/auth/logout', pageSize: 20, locale: 'en-US', timeZone: 'America/New_York' };</script>
+  <script src="/js/home.js" defer></script>
+</body>
+</html>

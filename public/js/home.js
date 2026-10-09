@@ -159,6 +159,15 @@
     }
   }
 
+  // After a filter change the page stays where the reader is while the filter form is on screen
+  // (typing in the search box must not move it). Only when the form is out of sight, deep in the
+  // feed, does the page move, and then just far enough to show the start of the new list.
+  function listStartIsHidden() {
+    const formBox = form.getBoundingClientRect();
+    const formOnScreen = formBox.bottom > 0 && formBox.top < window.innerHeight;
+    return !formOnScreen && list.getBoundingClientRect().top < 0;
+  }
+
   function messageFor(error) {
     if (error instanceof TypeError) return 'Could not reach the server. Check your connection and try again.';
     return error.message || 'Something went wrong. Try again.';
@@ -178,7 +187,6 @@
     if (reset) {
       if (state.controller) state.controller.abort();
       state.filters = readFilters();
-      if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'auto' });
     }
 
     const token = ++state.token;
@@ -208,6 +216,9 @@
 
       if (token !== state.token) return; // a newer request replaced this one
 
+      // Measured before the old list is removed, while the page still has its full height.
+      const jumpToStart = reset && listStartIsHidden();
+
       if (reset) {
         list.replaceChildren();
         state.ids.clear();
@@ -222,6 +233,7 @@
         fragment.append(buildCard(article, id));
       }
       list.append(fragment);
+      if (jumpToStart) list.scrollIntoView({ block: 'start', behavior: 'instant' });
 
       state.page = Number(body.page) || (reset ? 1 : state.page + 1);
       state.total = Number.isFinite(body.total) ? body.total : state.ids.size;

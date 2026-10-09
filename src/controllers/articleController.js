@@ -22,14 +22,8 @@ function toFeedItem(doc, seenSet) {
 function buildPublishedArticleFilter({ q, category }) {
   const filter = { published: { $ne: null } };
   if (category) filter['published.category'] = category;
-  if (q) {
-    const pattern = { $regex: escapeRegex(q), $options: 'i' };
-    filter.$or = [
-      { 'published.title': pattern },
-      { 'published.summary': pattern },
-      { reporterName: pattern },
-    ];
-  }
+  // Search matches the article title only, not the summary, the body or the reporter.
+  if (q) filter['published.title'] = { $regex: escapeRegex(q), $options: 'i' };
   return filter;
 }
 

@@ -98,6 +98,8 @@
   </main>
   <footer class="site-footer"><strong>THE DAILY BUGLE</strong><span>Serving New York City — facts, rumors, and everything in between.</span><span>© <%= new Date().getFullYear() %> The Daily Bugle</span></footer>
   <script>window.HOME_CONFIG = { initial: { page: 1, total: <%- Number(total) || 0 %>, hasMore: <%- (Number(total) > articles.length) ? 'true' : 'false' %> }, articleUrl: '/articles/', articlesApi: '/api/articles', weatherApi: '/api/weather', logoutApi: '/api/auth/logout', pageSize: 20, locale: 'en-US', timeZone: 'America/New_York' };</script>
+  <script src="/vendor/purify.min.js" defer></script>
+  <script src="/js/sanitize.js" defer></script>
   <script src="/js/home.js" defer></script>
 </body>
 </html>

@@ -322,7 +322,7 @@
         credentials: 'same-origin',
         headers: { Accept: 'application/json' },
       });
-      const payload = await response.json().catch(() => null);
+      const payload = window.sanitize.data(await response.json().catch(() => null));
       if (!response.ok || !payload) throw new Error((payload && payload.message) || 'The analytics could not be loaded.');
       data = payload;
       const url = new URL(window.location.href);

@@ -44,14 +44,20 @@ function renderRows(entries) {
 
   for (const entry of entries) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${escapeHtml(formatTimestamp(entry.timestamp))}</td>
-      <td><span class="level-pill level-${escapeHtml(entry.level || 'info')}">${escapeHtml(entry.level || 'info')}</span></td>
-      <td>${escapeHtml(entry.source || 'application')}</td>
-      <td>${escapeHtml(entry.message || '')}</td>
-      <td>${escapeHtml(entry.requestId || '')}</td>
-      <td>${escapeHtml(entry.userEmail || entry.userRole || '')}</td>
-    `;
+    const cells = [
+      escapeHtml(formatTimestamp(entry.timestamp)),
+      `<span class="level-pill level-${escapeHtml(entry.level || 'info')}">${escapeHtml(entry.level || 'info')}</span>`,
+      escapeHtml(entry.source || 'application'),
+      escapeHtml(entry.message || ''),
+      escapeHtml(entry.requestId || ''),
+      escapeHtml(entry.userEmail || entry.userRole || ''),
+    ];
+    // Log text is escaped so it shows exactly as recorded, then DOMPurify cleans each cell before it is injected.
+    for (const cell of cells) {
+      const td = document.createElement('td');
+      td.innerHTML = window.sanitize.html(cell);
+      tr.appendChild(td);
+    }
 
     tr.addEventListener('click', () => {
       logDetails.textContent = JSON.stringify(entry, null, 2);
@@ -101,7 +107,10 @@ async function populateSources() {
     const payload = await response.json();
     const sources = payload.sources || [];
     const currentValue = sourceSelect.value;
-    sourceSelect.innerHTML = '<option value="">All sources</option>' + sources.map((source) => `<option value="${escapeHtml(source)}">${escapeHtml(source)}</option>`).join('');
+    sourceSelect.replaceChildren(new Option('All sources', ''), ...sources.map((source) => {
+      const name = window.sanitize.text(source);
+      return new Option(name, name);
+    }));
     if (currentValue) sourceSelect.value = currentValue;
   } catch (error) {
     console.error('Failed to load source options', error);

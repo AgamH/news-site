@@ -29,6 +29,11 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(requestLogger);
 
+// DOMPurify is installed with npm and served from here, so the client never depends on a CDN.
+app.get('/vendor/purify.min.js', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'node_modules', 'dompurify', 'dist', 'purify.min.js'));
+});
+
 // Page routes (server-rendered EJS) at the root.
 app.use('/', pageRoutes);
 

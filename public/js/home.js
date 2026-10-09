@@ -200,7 +200,7 @@
         credentials: 'same-origin',
         headers: { Accept: 'application/json' },
       });
-      const body = await response.json().catch(() => null);
+      const body = window.sanitize.data(await response.json().catch(() => null));
       if (!response.ok) {
         throw new Error((body && body.message) || `The server returned an error (${response.status}). Try again.`);
       }
@@ -390,7 +390,7 @@
     try {
       const response = await fetch(config.weatherApi, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
       if (!response.ok) throw new Error(`weather ${response.status}`);
-      const data = await response.json();
+      const data = window.sanitize.data(await response.json());
 
       const fetchedAt = Date.parse(data.updatedAt);
       if (Number.isFinite(fetchedAt) && Date.now() - fetchedAt > WEATHER_MAX_AGE_MS) throw new Error('weather data too old');

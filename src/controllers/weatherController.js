@@ -2,7 +2,6 @@ const { httpError } = require('../utils/httpError');
 const { logEvent } = require('../services/logService');
 
 // The spec allows the weather widget to lag up to 15 minutes; caching for 5 minutes keeps it
-// well inside that, while meaning thousands of readers only ever cause one upstream call per
 // 5 minutes rather than one per page view.
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
@@ -39,7 +38,7 @@ const WEATHER_DESCRIPTIONS = {
   99: 'Thunderstorm with heavy hail',
 };
 
-let cache = null; // { data, fetchedAt } | null
+let cache = null; 
 
 async function fetchJson(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(8000) });

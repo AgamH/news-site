@@ -46,7 +46,7 @@
       <section class="panel filter-panel" aria-labelledby="filter-title">
         <div class="section-heading"><h2 id="filter-title">Find the facts</h2><button id="clear-filters" class="btn btn--quiet" type="button">Clear</button></div>
         <form id="feed-controls" class="feed-controls">
-          <label class="wide">Search<input name="q" type="search" placeholder="Title, summary, reporter…"></label>
+          <label class="wide">Search<input name="q" type="search" placeholder="Article title…"></label>
           <label>Category<select name="category"><option value="">All categories</option><option>News</option><option>Politics</option><option>Economy</option><option>Technology</option><option>Sports</option><option>Culture</option><option>Opinion</option><option>Entertainment</option><option>Science</option></select></label>
           <% if (currentUser) { %><label>Viewed<select name="seen"><option value="all">All articles</option><option value="seen">Already viewed</option><option value="unseen">Not viewed yet</option></select></label><% } else { %><input type="hidden" name="seen" value="all"><% } %>
           <label class="wide">Sort by<select name="sort"><option value="newest">Newest first</option><option value="popular">Most popular</option></select></label>

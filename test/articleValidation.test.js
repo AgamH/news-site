@@ -28,17 +28,14 @@ test('parseListQuery accepts every additional category shown on the homepage', (
   assert.equal(parseListQuery({ category: 'Science' }).category, 'Science');
 });
 
-test('published article search covers title, summary, and reporter safely', () => {
+test('published article search matches the title only, safely', () => {
   const filter = buildPublishedArticleFilter({ q: 'Dana (editor)', category: 'Science' });
-  const clauses = filter.$or;
 
   assert.equal(filter['published.category'], 'Science');
-  assert.deepEqual(clauses.map((condition) => Object.keys(condition)[0]), [
-    'published.title',
-    'published.summary',
-    'reporterName',
-  ]);
-  assert.ok(clauses.every((condition) => Object.values(condition)[0].$regex === escapeRegex('Dana (editor)')));
+  assert.equal(filter.$or, undefined);
+  assert.equal(filter['published.summary'], undefined);
+  assert.equal(filter.reporterName, undefined);
+  assert.deepEqual(filter['published.title'], { $regex: escapeRegex('Dana (editor)'), $options: 'i' });
 });
 
 test('parseListQuery falls back to a safe value for an invalid seen/sort', () => {

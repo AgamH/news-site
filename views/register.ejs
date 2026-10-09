@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %> — The Daily Web</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="auth-page">
+    <main class="auth-shell">
+      <section class="auth-card">
+        <p class="eyebrow">THE DAILY WEB</p>
+        <h1>Create <%= role %> account</h1>
+        <p><%= role === 'editor' ? 'An editor registration code is required. Editors can approve, return, edit, and delete any article.' : 'Reporters can draft articles, submit them for editor approval, and edit their own articles — including ones already published.' %></p>
+        <form id="auth-form" data-mode="register" data-role="<%= role %>">
+          <label class="wide">Full name<input name="name" maxlength="100" autocomplete="name" required /></label>
+          <label class="wide">Email<input name="email" type="email" autocomplete="email" required /></label>
+          <label class="wide">Password<input name="password" type="password" minlength="8" autocomplete="new-password" required /></label>
+          <% if (role === 'editor') { %>
+            <label class="wide">Editor registration code<input name="editorCode" type="password" autocomplete="off" required /></label>
+          <% } %>
+          <button class="wide" type="submit">Create account</button>
+        </form>
+        <p id="auth-message" class="form-message" role="status"></p>
+        <div class="auth-links"><a href="/login">Already have an account? Log in</a></div>
+      </section>
+    </main>
+    <script src="/auth.js" defer></script>
+  </body>
+</html>

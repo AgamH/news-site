@@ -1,7 +1,3 @@
-/* The Web Daily - log in
-   Same tokens and type as home.css so both pages read as one product.
-   Logical properties are used throughout, so dir="rtl" works later. */
-
 :root {
   --ink: #14283f;
   --ink-soft: #4a5b6e;

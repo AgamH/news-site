@@ -22,7 +22,7 @@ function requestLogger(req, res, next) {
       req,
       statusCode: res.statusCode,
       durationMs: Math.round(durationMs),
-    }).catch(() => {}); // logEvent already swallows its own errors; this is just a safety net
+    }).catch(() => {}); 
   });
 
   next();

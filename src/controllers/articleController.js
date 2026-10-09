@@ -5,7 +5,7 @@ const { getOrCreateDeviceId } = require('../middleware/deviceMiddleware');
 const { escapeRegex, parseListQuery, sanitizeCommentInput, CATEGORIES } = require('../utils/articleValidation');
 const { httpError } = require('../utils/httpError');
 
-/** Shapes one Article document (from .lean()) into the JSON the home feed's client expects. */
+// Shapes one Article document (from .lean()) into the JSON the home feed's client expects. 
 function toFeedItem(doc, seenSet) {
   return {
     _id: doc._id,
@@ -33,21 +33,13 @@ function buildPublishedArticleFilter({ q, category }) {
   return filter;
 }
 
-/**
- * The query behind the home feed: published articles only, filtered/sorted/paginated.
- * Shared by the JSON API (listPublishedArticles) and the server-rendered first page
- * (pageController.showHomePage), so the two can never drift out of sync with each other.
- *
- * Filters by the PUBLISHED snapshot (title/category as they were when approved), not the
- * reporter's current working draft, since that's what a public reader is actually seeing.
- */
 async function getArticleFeed(req, res) {
   const { q, category, seen, sort, page, limit } = parseListQuery(req.query);
   const deviceId = getOrCreateDeviceId(req, res);
 
   const filter = buildPublishedArticleFilter({ q, category });
 
-  // Needed both to apply the seen/unseen filter and to flag each returned article either way.
+  // Needed both to apply the seen/unseen filter and to flag each returned article.
   const seenIds = deviceId ? await getSeenArticleIds(deviceId) : [];
   if (seen === 'seen') filter._id = { $in: seenIds };
   else if (seen === 'unseen') filter._id = { $nin: seenIds };
@@ -72,10 +64,6 @@ async function listPublishedArticles(req, res) {
 }
 
 async function getPublishedArticle(req, res) {
-  // A general-purpose JSON read of one published article. The article PAGE itself
-  // (pageController.showArticlePage) renders server-side for SEO and is what records a
-  // view, so fetching this endpoint does not count as a view — it exists for any future
-  // AJAX consumer (a share preview, etc.) that just needs the data.
   const article = await Article.findOne({ _id: req.params.id, published: { $ne: null } }).lean();
   if (!article) throw httpError(404, 'Article not found.');
 

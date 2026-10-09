@@ -91,7 +91,13 @@ Follow these steps to run the system locally on your machine.
     If a seed script is provided in the project, run it to populate the database with mock articles, comments, and users for testing purposes.
     *(Check package.json for specific seed commands like `npm run seed`)*
 
-5.  **Run the Application:**
+5.  **Run the Test:**
+    Start the test:   
+    ```bash
+    npm test
+    ```
+
+6.  **Run the Application:**
     Start the development server:
     ```bash
     npm run dev
@@ -101,5 +107,5 @@ Follow these steps to run the system locally on your machine.
     npm start
     ```
 
-6.  **View the Application:**
+7.  **View the Application:**
     Open your web browser and navigate to `http://localhost:3000` (or whichever port you specified in the `.env` file).

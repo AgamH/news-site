@@ -1,0 +1,199 @@
+{
+  "info": {
+    "_postman_id": "8e3bd339-9a14-4ced-9a63-b18f1222b814",
+    "name": "The Daily Bugle API - Authentication, Stories and Logs",
+    "description": "Ordered smoke-test collection for The Daily Bugle Express application. The app authenticates with an HTTP-only token cookie, not Authorization bearer tokens; keep Postman's cookie jar enabled and use the same baseUrl for every request. Local demo credentials are reporter1@example.com / DemoPass123! and editor1@example.com / DemoPass123!. Demo accounts require SEED_DEMO_DATA to be enabled at startup. Editor self-registration additionally requires EDITOR_SIGNUP_CODE and is intentionally not included here.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "reporterEmail", "value": "reporter1@example.com", "type": "string" },
+    { "key": "reporterPassword", "value": "DemoPass123!", "type": "string" },
+    { "key": "editorEmail", "value": "editor1@example.com", "type": "string" },
+    { "key": "editorPassword", "value": "DemoPass123!", "type": "string" },
+    { "key": "articleId", "value": "", "type": "string" },
+    { "key": "logId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1 - Authentication and reporter workspace",
+      "description": "Login stores the app's HTTP-only token cookie in Postman's cookie jar. Run these requests in order before role-protected requests.",
+      "item": [
+        {
+          "name": "Login as reporter",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{reporterEmail}}\",\n  \"password\": \"{{reporterPassword}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Reporter login succeeds', () => pm.response.to.have.status(200));",
+            "pm.test('Reporter role is returned', () => pm.expect(pm.response.json().user.role).to.eql('reporter'));",
+            "pm.test('Session is set as a cookie', () => pm.expect(pm.response.headers.get('Set-Cookie') || '').to.include('token='));"
+          ] } }]
+        },
+        {
+          "name": "Get current reporter",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/auth/me" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Cookie authenticates the current user', () => pm.response.to.have.status(200));",
+            "pm.test('Current user is a reporter', () => pm.expect(pm.response.json().user.role).to.eql('reporter'));"
+          ] } }]
+        },
+        {
+          "name": "Open reporter dashboard",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/reporter" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Reporter dashboard renders', () => pm.response.to.have.status(200));",
+            "pm.test('Dashboard contains the reporter workspace', () => pm.expect(pm.response.text()).to.include('My articles'));"
+          ] } }]
+        },
+        {
+          "name": "Reject reporter access to editor logs",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/admin/logs" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Reporter is forbidden from editor-only logs', () => pm.response.to.have.status(403));"
+          ] } }]
+        },
+        {
+          "name": "Logout reporter",
+          "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/api/auth/logout" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Reporter logout succeeds', () => pm.response.to.have.status(200));",
+            "pm.test('Logout confirms success', () => pm.expect(pm.response.json().ok).to.eql(true));"
+          ] } }]
+        },
+        {
+          "name": "Reject current-user request after logout",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/auth/me" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Cleared cookie is no longer authenticated', () => pm.response.to.have.status(401));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "2 - Public stories, comments and weather",
+      "description": "Public endpoints. Listing stores the first article ID for the following detail and comment requests.",
+      "item": [
+        {
+          "name": "List latest published articles",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/articles?page=1&limit=20&sort=newest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "articles"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sort", "value": "newest" }
+              ]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Published article feed succeeds', () => pm.response.to.have.status(200));",
+            "const data = pm.response.json();",
+            "pm.test('Feed is paginated', () => { pm.expect(data.data).to.be.an('array'); pm.expect(data).to.include.keys('page', 'limit', 'total', 'hasMore'); });",
+            "if (data.data.length) pm.collectionVariables.set('articleId', data.data[0]._id);"
+          ] } }]
+        },
+        {
+          "name": "Search Spider-Man comic coverage",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/articles?q=Spider-Man&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "articles"],
+              "query": [{ "key": "q", "value": "Spider-Man" }, { "key": "limit", "value": "20" }]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Article search succeeds', () => pm.response.to.have.status(200));",
+            "pm.test('Search returns a paginated data array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+          ] } }]
+        },
+        {
+          "name": "Get first article from feed",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/articles/{{articleId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Published article details are returned', () => pm.response.to.have.status(200));",
+            "pm.test('Article includes public story fields', () => pm.expect(pm.response.json()).to.include.keys('_id', 'title', 'summary', 'content', 'category', 'reporter'));"
+          ] } }]
+        },
+        {
+          "name": "Post a reader comment",
+          "description": "Creates a comment on the first listed article. The device-based rate limiter may return 429 if comments are posted repeatedly in a short period.",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"authorName\": \"Bugle Reader\",\n  \"body\": \"Postman API check: the neighborhood is following this story.\"\n}" },
+            "url": "{{baseUrl}}/api/articles/{{articleId}}/comments"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Comment is created or rate-limited', () => pm.expect([201, 429]).to.include(pm.response.code));",
+            "if (pm.response.code === 201) pm.test('Created comment has a body', () => pm.expect(pm.response.json().comment.body).to.be.a('string').and.not.empty);"
+          ] } }]
+        },
+        {
+          "name": "Get current New York weather",
+          "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/api/weather" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Weather endpoint succeeds', () => pm.response.to.have.status(200));",
+            "pm.test('Weather response contains widget fields', () => pm.expect(pm.response.json()).to.include.keys('city', 'tempC', 'feelsLikeC', 'description', 'humidity', 'windKph', 'updatedAt'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "3 - Editor logs",
+      "description": "Uses the seeded local editor account. Login replaces the session cookie with an editor session before calling protected log endpoints.",
+      "item": [
+        {
+          "name": "Login as editor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{editorEmail}}\",\n  \"password\": \"{{editorPassword}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Editor login succeeds', () => pm.response.to.have.status(200));",
+            "pm.test('Editor role is returned', () => pm.expect(pm.response.json().user.role).to.eql('editor'));"
+          ] } }]
+        },
+        {
+          "name": "List and filter system logs",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/logs?page=1&limit=25&level=error",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "logs"],
+              "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "25" }, { "key": "level", "value": "error" }]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Editor can query system logs', () => pm.response.to.have.status(200));",
+            "const data = pm.response.json();",
+            "pm.test('Log response is paginated', () => { pm.expect(data.data).to.be.an('array'); pm.expect(data).to.include.keys('page', 'limit', 'total', 'hasMore'); });",
+            "if (data.data.length) pm.collectionVariables.set('logId', data.data[0]._id);"
+          ] } }]
+        },
+        {
+          "name": "Get latest matching log detail",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/admin/logs/{{logId}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Log detail is returned when a matching record exists', () => pm.expect([200, 404]).to.include(pm.response.code));",
+            "if (pm.response.code === 200) pm.test('Log has an ID and message', () => pm.expect(pm.response.json()).to.include.keys('_id', 'message'));"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}

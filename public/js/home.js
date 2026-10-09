@@ -415,5 +415,12 @@
     });
   }
 
+  // A refreshed or shared link carries its filters in the address bar: apply them to the form and reload.
+  const urlFilters = new URLSearchParams(location.search);
+  for (const key of Object.keys(DEFAULTS)) {
+    if (urlFilters.has(key)) form.elements[key].value = urlFilters.get(key);
+  }
+
   updateUi();
+  if (!sameFilters(readFilters(), state.filters)) load({ reset: true });
 })();

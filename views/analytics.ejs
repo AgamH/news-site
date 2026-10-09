@@ -11,7 +11,8 @@
     <%# כותרת הלשונית %>
     <title><%= title %> — The Daily Bugle</title>
     <%# קובץ העיצוב %>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/newsroom.css" />
   <%# סוף הראש %>
   </head>
   <%# גוף הדף %>
@@ -33,27 +34,33 @@
       <%# כותרת - שם הכתבה %>
       <h1><%= articleTitle %></h1>
       <%# הסבר קצר על הגרף %>
-      <p>Daily views over time. Dashed lines mark when an update was published.</p>
+      <p>Daily recorded reader views for the last 30 days.</p>
     <%# סוף הכותרת העליונה %>
     </header>
     <%# תוכן ראשי %>
     <main class="form-main">
       <%# פאנל הגרף %>
-      <section class="panel">
-        <%# אזור הודעות (טוען/שגיאה/סיכום) %>
-        <p id="analytics-message" class="form-message" role="status"></p>
-        <%# אלמנט ה-canvas שעליו Chart.js מצייר את הגרף %>
-        <div class="chart-wrap"><canvas id="views-chart" height="110"></canvas></div>
+      <section class="analytics-summary" aria-label="Article view summary">
+        <div><span>All-time views</span><strong><%= totalViews %></strong></div>
+        <div><span>Last 30 days</span><strong><%= periodViews %></strong></div>
+      </section>
+      <section class="panel analytics-panel" aria-labelledby="analytics-chart-title">
+        <div class="analytics-heading"><div><p class="eyebrow">LAST 30 DAYS</p><h2 id="analytics-chart-title">Daily reader views</h2></div><span>UTC</span></div>
+        <% if (periodViews === 0) { %><p class="empty-state">No recorded views in the last 30 days.</p><% } %>
+        <div class="analytics-chart" role="img" aria-label="Daily views over the last 30 days">
+          <% dailyViews.forEach((day) => { %>
+            <div class="analytics-day" title="<%= day.date %>: <%= day.views %> views">
+              <span class="analytics-value"><%= day.views || '' %></span>
+              <span class="analytics-bar" style="--bar-height: <%= Math.max(3, Math.round(day.views / peakViews * 100)) %>%"></span>
+              <span class="analytics-date"><%= day.label %></span>
+            </div>
+          <% }) %>
+        </div>
       <%# סוף הפאנל %>
       </section>
     <%# סוף התוכן הראשי %>
     </main>
-    <%# טעינת ספריית Chart.js מ-CDN (בלי defer - נטענת לפני שהסקריפט שלנו רץ) %>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
-    <%# מעבירים את מזהה הכתבה ל-JavaScript %>
-    <script>window.articleId = <%- JSON.stringify(articleId) %>;</script>
-    <%# סקריפט בניית הגרף %>
-    <script src="/analytics.js" defer></script>
+    <script src="/js/reporter-dashboard.js" defer></script>
   <%# סוף הגוף %>
   </body>
 <%# סוף המסמך %>

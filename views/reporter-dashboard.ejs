@@ -11,118 +11,77 @@
     <%# כותרת הלשונית %>
     <title><%= title %> — The Daily Bugle</title>
     <%# קובץ העיצוב %>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/reporter-dashboard.css">
   <%# סוף הראש %>
   </head>
   <%# גוף הדף %>
-  <body>
-    <%# כותרת עליונה קומפקטית %>
-    <header class="compact-header">
-      <%# סרגל חשבון %>
-      <nav class="account-bar" aria-label="Account">
-        <%# חזרה לפיד החדשות %>
-        <a class="nav-link" href="/">← News feed</a>
-        <%# שם המשתמש (תמיד reporter בדף הזה, כי הנתיב מוגן) %>
-        <span>Signed in as <strong><%= currentUser.name %></strong> · reporter</span>
-        <%# כפתור יציאה %>
-        <button id="logout" class="light-button" type="button">Log out</button>
-      <%# סוף הסרגל %>
+  <body class="reporter-dashboard">
+    <header class="reporter-header">
+      <nav class="reporter-nav" aria-label="Account navigation">
+        <a href="/">News feed</a>
+        <span>Signed in as <strong><%= currentUser.name %></strong></span>
+        <button id="logout" type="button">Log out</button>
       </nav>
-      <%# כיתוב קטן %>
-      <p class="eyebrow">THE DAILY BUGLE · REPORTER</p>
-      <%# כותרת %>
-      <h1>My articles</h1>
-    <%# סוף הכותרת העליונה %>
+      <div class="reporter-heading">
+        <p class="reporter-kicker">THE DAILY BUGLE · REPORTER DESK</p>
+        <h1>My articles</h1>
+        <p>Track drafts, submissions, and published stories.</p>
+      </div>
     </header>
-    <%# תוכן ראשי %>
-    <main class="admin-main">
-      <%# פאנל הסינון %>
-      <section class="panel log-filter-panel">
-        <%# כותרת הפאנל %>
-        <h2>Filter by status</h2>
-        <%# שורת קישורי הסינון לפי מצב %>
-        <nav class="status-filters">
-          <%# 'הכל' - מודגש אם זה הסינון הנוכחי %>
-          <a href="/reporter" class="<%= statusFilter === '' ? 'active' : '' %>">All</a>
-          <%# 'בהכנה' %>
-          <a href="/reporter?status=draft" class="<%= statusFilter === 'draft' ? 'active' : '' %>">Draft</a>
-          <%# 'ממתינה' %>
-          <a href="/reporter?status=pending" class="<%= statusFilter === 'pending' ? 'active' : '' %>">Pending</a>
-          <%# 'פורסמה' %>
-          <a href="/reporter?status=published" class="<%= statusFilter === 'published' ? 'active' : '' %>">Published</a>
-          <%# 'הוחזרה' %>
-          <a href="/reporter?status=returned" class="<%= statusFilter === 'returned' ? 'active' : '' %>">Returned</a>
-        <%# סוף שורת הקישורים %>
-        </nav>
-        <%# כפתור 'כתבה חדשה' שמוביל לטופס היצירה %>
-        <a class="wide" href="/reporter/new"><button class="wide" type="button">+ New article</button></a>
-      <%# סוף הפאנל %>
-      </section>
-      <%# אזור הכתבות %>
-      <section class="log-results">
-        <%# שורת כותרת %>
-        <div class="section-heading">
-          <%# כותרת %>
-          <h2>Articles</h2>
-          <%# מונה הכתבות (עם יחיד/רבים) %>
-          <span><%= total %> article<%= total === 1 ? '' : 's' %></span>
-        <%# סוף שורת הכותרת %>
-        </div>
-        <%# אם אין כתבות בתצוגה הנוכחית: %>
-        <% if (!articles.length) { %>
-          <%# הודעה מתאימה %>
-          <div class="empty-state">No articles in this view yet.</div>
-        <%# סוף התנאי %>
-        <% } %>
-        <%# לולאה על כל הכתבות: %>
-        <% articles.forEach((article) => { %>
-          <%# כרטיס כתבה %>
-          <article class="card">
-            <%# כותרת הכתבה כקישור לעריכה %>
-            <h3><a class="card-link" href="/reporter/<%= article.id %>/edit"><%= article.title %></a></h3>
-            <%# רשימת פרטים %>
-            <dl class="meta">
-              <%# תג הסטטוס (הצבע משתנה לפי class דינמי level-<status>) %>
-              <div><dt>Status</dt><dd><span class="level level-<%= article.status %>"><%= article.status %></span></dd></div>
-              <%# קטגוריה %>
-              <div><dt>Category</dt><dd><%= article.category %></dd></div>
-              <%# האם חיה כרגע באתר הציבורי %>
-              <div><dt>Live on site</dt><dd><%= article.isLive ? 'Yes' : 'No' %></dd></div>
-              <%# מספר צפיות %>
-              <div><dt>Views</dt><dd><%= article.views %></dd></div>
-            <%# סוף רשימת הפרטים %>
-            </dl>
-            <%# אם הכתבה הוחזרה ויש הערת עורך: %>
-            <% if (article.status === 'returned' && article.editorNote) { %>
-              <%# מציגים אותה בכרטיס %>
-              <p class="note">Editor's note: <%= article.editorNote %></p>
-            <%# סוף התנאי %>
+    <main class="reporter-main">
+      <% if (notice) { %><p class="reporter-notice" role="status"><%= notice %></p><% } %>
+      <section class="reporter-tools" aria-labelledby="status-title">
+        <div>
+          <h2 id="status-title">Your newsroom</h2>
+          <nav class="reporter-filters" aria-label="Filter articles by status">
+            <a href="/reporter" class="<%= statusFilter === '' ? 'active' : '' %>" <%= statusFilter === '' ? 'aria-current="page"' : '' %>>All <span><%= Object.values(statusCounts).reduce((sum, count) => sum + count, 0) %></span></a>
+            <% for (const status of ['draft', 'pending', 'published', 'returned']) { %>
+              <a href="/reporter?status=<%= status %>" class="<%= statusFilter === status ? 'active' : '' %>" <%= statusFilter === status ? 'aria-current="page"' : '' %>><%= status[0].toUpperCase() + status.slice(1) %> <span><%= statusCounts[status] %></span></a>
             <% } %>
-          <%# סוף הכרטיס %>
-          </article>
-        <%# סוף הלולאה %>
-        <% }) %>
-        <%# אם יש יותר מעמוד אחד: %>
-        <% if (pages > 1) { %>
-          <%# ניווט עמודים %>
-          <nav class="pagination">
-            <%# לולאה על כל מספרי העמודים %>
-            <% for (let p = 1; p <= pages; p++) { %>
-              <%# קישור לכל עמוד, מודגש אם זה העמוד הנוכחי %>
-              <a href="/reporter?status=<%= statusFilter %>&page=<%= p %>" class="<%= p === page ? 'active' : '' %>"><%= p %></a>
-            <%# סוף הלולאה %>
-            <% } %>
-          <%# סוף הניווט %>
           </nav>
-        <%# סוף התנאי %>
-        <% } %>
-      <%# סוף אזור הכתבות %>
+        </div>
+        <a class="new-article" href="/reporter/new">+ New article</a>
       </section>
-    <%# סוף התוכן הראשי %>
+
+      <section class="reporter-articles" aria-labelledby="articles-title">
+        <div class="reporter-section-heading">
+          <h2 id="articles-title"><%= statusFilter ? statusFilter[0].toUpperCase() + statusFilter.slice(1) : 'All' %> articles</h2>
+          <span><%= total %> total</span>
+        </div>
+        <% if (!articles.length) { %>
+          <p class="reporter-empty">No articles in this view yet.</p>
+        <% } else { %>
+          <ul class="reporter-list">
+            <% articles.forEach((article) => { %>
+              <li class="reporter-row">
+                <div class="reporter-row-main">
+                  <p class="reporter-category"><%= article.category %></p>
+                  <h3><a href="/reporter/<%= article.id %>/edit"><%= article.title %></a></h3>
+                  <% if (article.status === 'returned' && article.editorNote) { %>
+                    <p class="reporter-note"><strong>Editor's note:</strong> <%= article.editorNote %></p>
+                  <% } %>
+                </div>
+                <dl class="reporter-meta">
+                  <div><dt>Status</dt><dd><span class="reporter-status reporter-status--<%= article.status %>"><%= article.status %></span></dd></div>
+                  <div><dt>Live</dt><dd><%= article.isLive ? 'Yes' : 'No' %></dd></div>
+                  <div><dt>Views</dt><dd><%= article.views %></dd></div>
+                  <div><dt>Updated</dt><dd><time datetime="<%= new Date(article.updatedAt).toISOString() %>"><%= new Date(article.updatedAt).toLocaleDateString('en-US') %></time></dd></div>
+                </dl>
+              </li>
+            <% }) %>
+          </ul>
+          <% if (pages > 1) { %>
+            <nav class="reporter-pagination" aria-label="Article pages">
+              <% if (page > 1) { %><a href="/reporter?status=<%= statusFilter %>&page=<%= page - 1 %>" rel="prev">Previous</a><% } %>
+              <span>Page <%= page %> of <%= pages %></span>
+              <% if (page < pages) { %><a href="/reporter?status=<%= statusFilter %>&page=<%= page + 1 %>" rel="next">Next</a><% } %>
+            </nav>
+          <% } %>
+        <% } %>
+      </section>
     </main>
-    <%# סקריפט היציאה המשותף %>
-    <script src="/dashboard.js" defer></script>
-  <%# סוף הגוף %>
+    <script src="/js/reporter-dashboard.js" defer></script>
   </body>
 <%# סוף המסמך %>
 </html>

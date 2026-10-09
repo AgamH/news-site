@@ -11,7 +11,8 @@
     <%# כותרת הלשונית (שונה לפי מצב: 'New article' או 'Edit article') %>
     <title><%= title %> — The Daily Bugle</title>
     <%# קובץ העיצוב %>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/newsroom.css" />
   <%# סוף הראש %>
   </head>
   <%# גוף הדף %>
@@ -37,6 +38,7 @@
     <%# תוכן ראשי %>
     <main class="form-main">
       <%# אם הטופס נעול (למשל כתבה שממתינה לאישור): %>
+      <% if (notice) { %><p class="workflow-notice" role="status"><%= notice %></p><% } %>
       <% if (locked) { %>
         <%# מציגים את סיבת הנעילה במקום אזהרה %>
         <div class="empty-state"><%= lockedReason %></div>
@@ -45,7 +47,7 @@
       <%# אם במצב 'missing' (כתבה לא נמצאה) - לא מציגים טופס בכלל: %>
       <% if (mode !== 'missing') { %>
         <%# הטופס. data-attributes מעבירים ל-JavaScript את המצב וכתובות הפעולה %>
-        <form id="article-form" class="panel article-form"
+        <form id="article-form" class="panel article-form" method="post" action="<%= actionUrl %>"
           <%# מצב: יצירה או עריכה %>
           data-mode="<%= mode %>"
           <%# כתובת לשמירה %>
@@ -97,11 +99,11 @@
           <%# כפתור שמירה - הטקסט משתנה לפי המצב %>
           <div class="card-actions wide">
             <%# אם יש כתובת שליחה לאישור (מצב עריכת כתב): %>
-            <button type="submit" <% if (locked) { %>disabled<% } %>><%= mode === 'create' ? 'Create draft' : 'Save changes' %></button>
+            <button type="submit" name="intent" value="save" <% if (locked) { %>disabled<% } %>><%= mode === 'create' ? 'Save draft' : 'Save changes' %></button>
             <%# כפתור 'שלח לאישור עורך' %>
             <% if (typeof submitUrl !== 'undefined' && submitUrl) { %>
               <%# סוף התנאי %>
-              <button type="button" id="submit-for-review" class="secondary" <% if (locked) { %>disabled<% } %>>Submit for editor approval</button>
+              <button type="submit" name="intent" value="submit" class="secondary" <% if (locked) { %>disabled<% } %>>Submit for editor approval</button>
             <%# סוף אזור הפעולות %>
             <% } %>
           <%# סגירת הטופס %>
@@ -127,7 +129,7 @@
     <%# סקריפט הטיפול בטופס %>
     </main>
     <%# סוף הגוף %>
-    <script src="/article-form.js" defer></script>
+    <script src="/js/reporter-dashboard.js" defer></script>
   <%# סוף המסמך %>
   </body>
 </html>

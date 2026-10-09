@@ -1,39 +1,125 @@
-/**
- * Placeholder reporter workspace controller.
- *
- * Deliberately NOT implemented in this branch: a real reporter dashboard (article list +
- * status, autosave create/edit form, submit-for-approval) is its own unit of work, built on
- * top of Article's submitForApproval()/EDITABLE_STATUSES (see src/models/articleModel.js).
- * These stubs exist only so the app boots and /reporter doesn't 500 while that work is done.
- *
- * reporterRoutes.js already guards every one of these with authenticatePage + requirePageRole
- * ('reporter'), so req.user is always a logged-in reporter by the time these run.
- */
+const mongoose = require('mongoose');
+const { Article, ARTICLE_STATUSES, EDITABLE_STATUSES, CATEGORIES } = require('../models/articleModel');
+const { parseArticleInput } = require('../utils/articleInput');
+const { httpError } = require('../utils/httpError');
 
-function comingSoon(res, title) {
-  res.status(200).type('html').send(`<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title} | The Web Daily</title>
-<style>
-  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f2f5f8;color:#14283f;
-       font:400 1rem/1.5 'Segoe UI',system-ui,sans-serif;text-align:center;padding:2rem}
-  h1{font-size:1.5rem;margin:0 0 .5rem}
-  a{color:#1f4fe0}
-</style></head>
-<body><div><h1>${title}</h1><p>This part of the reporter workspace is still being built.</p><p><a href="/">Back to stories</a></p></div></body></html>`);
+const PAGE_SIZE = 20;
+
+function formNotice(value) {
+  return ({
+    saved: 'Draft saved.',
+    submitted: 'Article submitted for editor approval.',
+  })[value] || '';
 }
 
-function showDashboard(req, res) {
-  comingSoon(res, 'My workspace');
+async function showDashboard(req, res) {
+  const reporterId = req.user.id;
+  const requestedStatus = String(req.query.status || '');
+  const statusFilter = ARTICLE_STATUSES.includes(requestedStatus) ? requestedStatus : '';
+  const baseFilter = { reporter: reporterId };
+  const filter = statusFilter ? { ...baseFilter, status: statusFilter } : baseFilter;
+  const requestedPage = Number.parseInt(req.query.page, 10);
+
+  const [total, statusCounts] = await Promise.all([
+    Article.countDocuments(filter),
+    Promise.all(ARTICLE_STATUSES.map((status) => Article.countDocuments({ ...baseFilter, status }))),
+  ]);
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(pages, Math.max(1, Number.isFinite(requestedPage) ? requestedPage : 1));
+  const articles = await Article.find(filter)
+    .select('title category status editorNote published views updatedAt')
+    .sort({ updatedAt: -1, _id: -1 })
+    .skip((page - 1) * PAGE_SIZE)
+    .limit(PAGE_SIZE)
+    .lean();
+
+  return res.render('reporter-dashboard', {
+    title: 'My articles',
+    currentUser: req.user,
+    articles: articles.map((article) => ({
+      id: article._id.toString(),
+      title: article.title,
+      category: article.category,
+      status: article.status,
+      editorNote: article.editorNote,
+      isLive: Boolean(article.published),
+      views: article.views || 0,
+      updatedAt: article.updatedAt,
+    })),
+    statusFilter,
+    total,
+    page,
+    pages,
+    notice: req.query.notice === 'submitted' ? 'Article submitted for editor approval.' : '',
+    statusCounts: Object.fromEntries(ARTICLE_STATUSES.map((status, index) => [status, statusCounts[index]])),
+  });
 }
 
-/** Not wrapped in asyncHandler by the routes (see reporterRoutes.js) — must stay synchronous. */
 function showNewForm(req, res) {
-  comingSoon(res, 'New article');
+  return res.render('article-form', {
+    title: 'New article',
+    currentUser: req.user,
+    article: null,
+    articleRaw: null,
+    categories: CATEGORIES,
+    mode: 'create',
+    actionUrl: '/reporter/new',
+    submitUrl: '/reporter/new',
+    cancelUrl: '/reporter',
+    locked: false,
+    lockedReason: '',
+    notice: formNotice(req.query.notice),
+  });
 }
 
-function showEditForm(req, res) {
-  comingSoon(res, 'Edit article');
+async function showEditForm(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) throw httpError(404, 'Article not found.');
+  const article = await Article.findOne({ _id: req.params.id, reporter: req.user.id }).lean();
+  if (!article) throw httpError(404, 'Article not found.');
+
+  const locked = article.status === 'pending';
+  return res.render('article-form', {
+    title: 'Edit article',
+    currentUser: req.user,
+    article,
+    articleRaw: article,
+    categories: CATEGORIES,
+    mode: 'edit',
+    actionUrl: `/reporter/${article._id}/edit`,
+    submitUrl: `/reporter/${article._id}/edit`,
+    cancelUrl: '/reporter',
+    locked,
+    lockedReason: locked ? 'This article is pending editor review and cannot be changed.' : '',
+    notice: formNotice(req.query.notice),
+  });
 }
 
-module.exports = { showDashboard, showNewForm, showEditForm };
+async function createArticle(req, res) {
+  const article = new Article({
+    ...parseArticleInput(req.body),
+    reporter: req.user.id,
+    reporterName: req.user.name,
+  });
+
+  if (req.body.intent === 'submit') article.submitForApproval();
+  await article.save();
+  if (article.status === 'pending') return res.redirect('/reporter?status=pending&notice=submitted');
+  return res.redirect(`/reporter/${article._id}/edit?notice=saved`);
+}
+
+async function updateArticle(req, res) {
+  if (!mongoose.isValidObjectId(req.params.id)) throw httpError(404, 'Article not found.');
+  const article = await Article.findOne({ _id: req.params.id, reporter: req.user.id });
+  if (!article) throw httpError(404, 'Article not found.');
+  if (!EDITABLE_STATUSES.includes(article.status)) {
+    throw httpError(409, 'This article cannot be edited while it is pending review.');
+  }
+
+  Object.assign(article, parseArticleInput(req.body));
+  if (req.body.intent === 'submit') article.submitForApproval();
+  await article.save();
+  if (article.status === 'pending') return res.redirect('/reporter?status=pending&notice=submitted');
+  return res.redirect(`/reporter/${article._id}/edit?notice=saved`);
+}
+
+module.exports = { showDashboard, showNewForm, showEditForm, createArticle, updateArticle };

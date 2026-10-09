@@ -11,7 +11,8 @@
     <%# כותרת הלשונית %>
     <title><%= title %> — The Daily Bugle</title>
     <%# קובץ העיצוב %>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/newsroom.css" />
   <%# סוף הראש %>
   </head>
   <%# גוף הדף %>
@@ -38,6 +39,7 @@
     </header>
     <%# תוכן ראשי %>
     <main class="admin-main">
+      <% if (notice) { %><p class="workflow-notice" role="status"><%= notice %></p><% } %>
       <%# פאנל הסינון %>
       <section class="panel log-filter-panel">
         <%# כותרת %>
@@ -111,7 +113,7 @@
     <%# סוף התוכן הראשי %>
     </main>
     <%# סקריפט היציאה %>
-    <script src="/dashboard.js" defer></script>
+    <script src="/js/reporter-dashboard.js" defer></script>
   <%# סוף הגוף %>
   </body>
 <%# סוף המסמך %>
